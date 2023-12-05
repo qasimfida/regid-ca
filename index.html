@@ -1,11 +1,689 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-</head>
-<body>
-    <h1>asdasdas</h1>
-</body>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-dark fixed-top">
+      <div class="container-fluid">
+        <a class="navbar-brand text-light" href="#">
+          <span class="open_book_icon">
+            <svg width="1em" height="1em" viewBox="0 0 512 512">
+              <path
+                fill="currentColor"
+                d="M202.24 74C166.11 56.75 115.61 48.3 48 48a31.36 31.36 0 0 0-17.92 5.33A32 32 0 0 0 16 79.9V366c0 19.34 13.76 33.93 32 33.93c71.07 0 142.36 6.64 185.06 47a4.11 4.11 0 0 0 6.94-3V106.82a15.89 15.89 0 0 0-5.46-12A143 143 0 0 0 202.24 74Zm279.68-20.7A31.33 31.33 0 0 0 464 48c-67.61.3-118.11 8.71-154.24 26a143.31 143.31 0 0 0-32.31 20.78a15.93 15.93 0 0 0-5.45 12v337.13a3.93 3.93 0 0 0 6.68 2.81c25.67-25.5 70.72-46.82 185.36-46.81a32 32 0 0 0 32-32v-288a32 32 0 0 0-14.12-26.61Z"
+              />
+            </svg>
+          </span>
+          <p class="m-0 logo-title">UNMASKING FORCED DISPLACEMENT</p>
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <svg viewBox="0 0 30 30" class="navbar-toggler-icon">
+            <path
+              stroke="rgba(255, 255, 255, 0.55)"
+              stroke-linecap="round"
+              stroke-miterlimit="10"
+              stroke-width="2"
+              d="M4 7h22M4 15h22M4 23h22"
+            />
+          </svg>
+        </button>
+        <div
+          class="collapse navbar-collapse text-light ml-auto border-2 justify-content-end"
+          id="navbarSupportedContent"
+        >
+         <div class="images_links_wrapper">
+            <li class="nav-images-links">
+                <a
+                  class="nav-link me-2"
+                  aria-current="page"
+                  href="https://africaworldpressbooks.com/"
+                  target="_blank"
+                >
+                  <img
+                    src="./assets/images/awp_logo_black.jpg"
+                    alt="Africa World
+                    Press wordmark"
+                  />
+                </a>
+              </li>
+              <li class="nav-images-links">
+                <a
+                  class="nav-link my-auto"
+                  aria-current="page"
+                  href="https://walkwithweb.org"
+                  target="_blank"
+                  ><img
+                    src="./assets/images/walk-with-web-white.png"
+                    id="www-logo"
+                    alt="Walk With Web www wordmark in block letters"
+                  />
+                </a>
+              </li>
+         </div>
+        </div>
+      </div>
+    </nav>
+    <!-- Body-Content -->
+    <div class="container body-content">
+      <div class="row">
+        <div class=" col-xs-12 col-md-3 mt-5 p-0">
+          <div class="tab_one">
+            <ul class="nav nav-tabs" id="myTabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#tab-1">
+                  <svg width="0.88em" height="1em" viewBox="0 0 448 512">
+                    <path
+                      fill="currentColor"
+                      d="M96 0C43 0 0 43 0 96v320c0 53 43 96 96 96h320c17.7 0 32-14.3 32-32s-14.3-32-32-32v-64c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H96zm0 384h256v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16zm16 48h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16z"
+                    />
+                  </svg>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-2">
+                  <svg width="1em" height="1em" viewBox="0 0 512 512">
+                    <path
+                      fill="currentColor"
+                      d="M464 480H48c-26.51 0-48-21.49-48-48V80c0-26.51 21.49-48 48-48h416c26.51 0 48 21.49 48 48v352c0 26.51-21.49 48-48 48zM128 120c-22.091 0-40 17.909-40 40s17.909 40 40 40s40-17.909 40-40s-17.909-40-40-40zm0 96c-22.091 0-40 17.909-40 40s17.909 40 40 40s40-17.909 40-40s-17.909-40-40-40zm0 96c-22.091 0-40 17.909-40 40s17.909 40 40 40s40-17.909 40-40s-17.909-40-40-40zm288-136v-32c0-6.627-5.373-12-12-12H204c-6.627 0-12 5.373-12 12v32c0 6.627 5.373 12 12 12h200c6.627 0 12-5.373 12-12zm0 96v-32c0-6.627-5.373-12-12-12H204c-6.627 0-12 5.373-12 12v32c0 6.627 5.373 12 12 12h200c6.627 0 12-5.373 12-12zm0 96v-32c0-6.627-5.373-12-12-12H204c-6.627 0-12 5.373-12 12v32c0 6.627 5.373 12 12 12h200c6.627 0 12-5.373 12-12z"
+                    />
+                  </svg>
+                </a>
+              </li>
+            </ul>
+            <!-- Tab panes -->
+            <div class="tab-content">
+              <div class="tab-pane fade show active px-3 py-3" id="tab-1">
+              <div class="book_cover_wrapper">
+                <div class="book-cover-img">
+                    <img src="./assets/images//AWP_Cover.jpeg" alt="book-cover" />
+                  </div>
+                  <div class="tab_1_content">
+                    <h6><strong>Unmasking Forced Displacement</strong></h6>
+                    <h6>Fikre Mariam Tsehai</h6>
+                    <h6>Copyright © 2024, Fikre Mariam Tsehai</h6>
+                    <hr style="width: 80%" />
+                    <h6>Book &amp; Cover design by Walk With Web Inc.</h6>
+                  </div>
+              </div>
+              </div>
+              <!-- Accordions -->
+              <div class="tab-pane fade" id="tab-2">
+                <h4 class="mb-0 py-3 text-center table_content">
+                  <strong>Table of Contents</strong>
+                </h4>
+                <div class="accordion" id="accordionExample">
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                      <button
+                        class="accordion-button"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseOne"
+                        aria-expanded="true"
+                        aria-controls="collapseOne"
+                      >
+                        Introduction
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseOne"
+                      class="accordion-collapse collapse show"
+                      aria-labelledby="headingOne"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1">Title Page</a>
+                          </li>
+                          <li>
+                            <a href="#s-2">Copyright Materials</a>
+                          </li>
+                          <li>
+                            <a href="#s-3">A Foreword by David Matas</a>
+                          </li>
+                          <li>
+                            <a href="#s-4">Introduction</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseTwo"
+                        aria-expanded="false"
+                        aria-controls="collapseTwo"
+                      >
+                        Chapter 1
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseTwo"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingTwo"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1"
+                              >The Taste of Displacement at a Young Age</a
+                            >
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingThree">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseThree"
+                        aria-expanded="false"
+                        aria-controls="collapseThree"
+                      >
+                        Chapter 2
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseThree"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingThree"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1">Choice and Dilemma</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingFourth">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseFourth"
+                        aria-expanded="false"
+                        aria-controls="collapseFourth"
+                      >
+                        Chapter 3
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseFourth"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingFourth"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1">Comfortable Exile in Geneva</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingFive">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseFive"
+                        aria-expanded="false"
+                        aria-controls="collapseFive"
+                      >
+                        Chapter 4
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseFive"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingFive"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1">To Canada?</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSix">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseSix"
+                        aria-expanded="false"
+                        aria-controls="collapseSix"
+                      >
+                        Chapter 5
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseSix"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingSix"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1"
+                              >The Root Causes of the African Refugee Crisis</a
+                            >
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSeventh">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseSeventh"
+                        aria-expanded="false"
+                        aria-controls="collapseSeventh"
+                      >
+                        Chapter 6
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseSeventh"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingSeventh"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1"
+                              >Drought and Conflict -- The Dual Drivers of
+                              Displacement</a
+                            >
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingEight">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseEight"
+                        aria-expanded="false"
+                        aria-controls="collapseEight"
+                      >
+                        Chapter 7
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseEight"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingEight"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1"
+                              >The Ethiopian Diaspora -- that Build and
+                              Cripple</a
+                            >
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingNine">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseNine"
+                        aria-expanded="false"
+                        aria-controls="collapseNine"
+                      >
+                        Chapter 8
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseNine"
+                      class="accordion-collapse collapse"
+                      aria-labelledby="headingNine"
+                      data-bs-parent="#accordionExample"
+                    >
+                      <div class="accordion-body">
+                        <ul>
+                          <li>
+                            <a href="#s-1">Reflections</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- End-Accordions -->
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-12 col-md-6 mt-5">
+           <h1 id="bk-title">Unmasking Forced Displacement</h1>
+                <h2 id="bk-subtitle">Autobiography / Memoir</h2>
+                <h5 id="bk-author">Fikre Mariam Tsehai</h5></section><section id="s-2" class="mt-5"><p>Copyright © 2024, Fikre Mariam Tsehai</p>
+                <p>All rights reserved. No part of this publication may be reproduced, stored in a retrieval system or transmitted in any form or by any means electronic, mechanical, photocopying, recording or otherwise without the prior written permission of the publisher.</p> 
+                <p>Book design: Walk With Web Inc.</p> 
+                <p>Cover design: Walk With Web Inc.</p>
+                <p>Cataloging-in-Publication Data may be obtained from the Library of Congress.</p>
+                <p>ISBNs: 978-1-56902-828-5 (HB)&nbsp;978-1-56902-829-2 (PB)</p></section><section id="s-3" class="mt-5"><h4 class="sect-title">A Foreword by David Matas</h4>
+                <p>The Horn of Africa has been a trumpet of doom for the most part of the last century.  Ethiopia, Somalia and Sudan have been living three interconnected tragedies. Gross and flagrant violations of human rights and humanitarian standards, desertification and famine, invasion and civil war have resulted in massive refugee flows. Nature and human agents have conspired to inflict an apocalypse on the region.</p>
+                <p>What we know of the Horn, we know through the media. The media show us the face of disaster, but not its causes. The causes are too complex for the ten-second sound bite the electronic media demand. The causes do not lend themselves to the same graphic visuals as the horrific results. Yet, if the problems of the Horn are ever to be resolved, the causes must be understood and addressed.</p> 
+                <p>The print media tell us a bit about the causes, but only proximate causes. The print media allow us to see the trunks underneath the poisoned fruit and foliage. The roots remain hidden, invisible and ignored.</p> 
+                <p>What are the root causes of displacement in Africa? What lessons can be learned from them? How can the situation be set right? These are the questions that Fikre Mariam Tsehai addresses in his book, Unmasking Forced Displacement.  The work of Fikre Mariam Tsehai goes beyond the superficialities we have learned from the media, probing underneath the surface.</p>
+                <p>The Horn has had so many problems over so long a time, the problems, at first blush, seem intractable. There is no one root cause for the problems in the Horn. Rather there are many roots, all entangled. Fikre Mariam takes us though his own story, digs up the roots, throws light on them and suggests how they can be disentangled and then amputated.</p>
+                <p>The solutions to the problems are no more simple than the causes. The prescriptions Fikre Mariam proposes are a recipe for hope. Through his writing, Fikre Mariam sows the seeds for a new orchard which will bear, instead of the poisoned fruit, the fruit of sustenance, of plenty.</p>
+                <p>The Horn of Africa up to now has been a symbol of all that is wrong with Africa. The book by Fikre Mariam, though it focuses on one country and the Horn of Africa, has value beyond the Horn as an example, a case study of displacement and what can be done to remedy it. By reading Fikre Mariam’s story and analysis, we cannot help but think how his analysis and solutions would apply to other countries, other regions, both in and out of Africa, afflicted in their own way by a combination of human-made and natural disasters.</p>
+                <p>The history of economic theory shows us that bad economies produce good economists. After reading Fikre Mariam’s book, we can say the same about more complex, more pervasive disasters. The tragedies of the Horn of Africa have produced, with Fikre Mariam Tsehai’s book, an insightful story and exemplary analysis.</p>
+                <p>To think of the Horn of Africa as a cornucopia, an example to others may now seem ridiculous. Yet adoption by the actors in the region and the international community of the luminous insights and trenchant solutions proposed by Fikre Mariam Tsehai make it seem a realistic possibility.</p>
+                <p><em>David Matas is a Winnipeg based lawyer and author of “No More: The Battle against Human Rights Violations”.</em></p></section><section id="s-4" class="mt-5"><h4 class="sect-title">Introduction</h4>
+                <p class="quote">"The civilization of the twentieth century cannot be universal except by being a dynamic synthesis of all the cultural values of all civilizations. It will be monstrous unless it is seasoned with the salt of Negritude for it will be without the saviour of humanity".</p><p class="quote mb-3 text-center">Leopold Sedar Senghor</p>
+                
+                <p>In early 2020, when the death rate from COVID-19 was at its peak in Italy, with an average daily toll reaching 4000, I came across a news report that struck my mind. It stated, “Thirty-five Italian tourists who were in Ethiopia in March 2020 refused to return to Italy because of fear of the high death rates from COVID-19”. At the time, the effect of the pandemic in Ethiopia wasn't as bad - hardly anyone had died. The Italian tourists didn’t want to go back to Italy and risk their lives from this deadly pandemic. They decided to stay in Ethiopia and be protected in a safer place. They were allowed to stay, even though their visas had expired.</p>
+                <p>I was not a bit surprised by Ethiopia’s swift decision to allow the Italians to stay. Technically, they were out of status.  They were overstaying their visas. That was the least of their concerns. They didn't want to go back to Italy and risk death from COVID-19. They were allowed to stay for that reason. When the Ethiopian authorities allowed them to stay, I doubt whether they had to refer to <a id="cit-1" href="#ref-1" class="citation-link">Article 33</a> of the Geneva Convention which states, <em>“No Contracting State shall expel or return a refugee in any manner whatsoever to the frontiers of territories where his life or freedom would be threatened on account of his race, religion, nationality, membership of a particular social group or political opinion”</em> <sup><span class="tooltips" data-bs-toggle="tooltip" title="" data-bs-original-title="UN Convention Relating to the Status of Refugees, signed in Geneva on 28 July 1951">1</span></sup>.</p>
+                <p>Although fear from a deadly Pandemic such as COVID-19 is not one of the reasons listed in the Convention for making an asylum claim, no one would ever doubt that their fear of dying from this pandemic was real. By being allowed to stay in Ethiopia, they became protected persons.</p>
+                <p>The 1951 Convention is too narrow and does not cover all other grounds that force people to flee, or others, like the Italians, who become <em>refugee sur place</em> by refusing to return to a place where their lives will be in danger.  Ethiopia did what was morally the right thing to do.  It was self-evident that the lives of the Italian tourists were threatened by the lethal COVID-19 pandemic.</p>
+                <p>Everybody knew that Italy was in the middle of a devastating coronavirus pandemic at that time. For the Ethiopians, to whom the act of providing sanctuary is rooted in their long-held values, allowing the Italian tourists to stay until things got better was the right and easy decision. It was a decision based on moral responsibility. There was no need for the law to intervene - whether they overstayed their visas or not. In fact, at times like this, the law becomes an unnecessary hurdle that robs us of our inherent human instinct and prevents us from doing the right thing when fellow human beings find themselves in distress.</p>
+                <p>Anyone who knows the history of Ethiopia, its values and its ageold traditions knows full well that when a person runs for safety, it is a moral duty to provide sanctuary. In different epochs, people whose lives were in danger due to their beliefs or racial backgrounds have come to Ethiopia and been given a safe haven. The first time was 1400 years ago. In 615 AD, when followers of Prophet Mohammad and his wife fled persecution from the ruling Quraysh of Mecca, they were given sanctuary in Ethiopia. The Kingdom of Axum, present day Ethiopia, welcomed them and they made Ethiopia their home. Thus , Ethiopia became one of the first documented countries in history to provide asylum to those who were persecuted. The act of giving sanctuary to those who flee persecution is still part and parcel of Ethiopian values.</p>
+                <p>Nowadays, it looks like wealthy countries seem to be losing compassion for people who flee all kinds of dangers to their lives, whether it is from conflict or climate change or brutal dictatorships. Wealthy countries are becoming very protective of their borders.  They build fences to keep migrants out, or they send those who seek asylum back to danger. Such legislation and policies are an affront to human values of caring and compassion. The negative narratives used by unconscionable and unethical politicians also spread xenophobic culture. Because of this indifference and total apathy, we see refugees from countries such as Afghanistan, Syria, Congo, and others from the Global South being unwelcome and rejected.</p>
+                <p>The Ukrainian refugee crisis has shown us an abrupt about-face, with a  preferential treatmemt  to  refugees fleeing the war, at least in the first few months of the conflict. However, this remarkable shift in the way European and Western countries respond to forced displacement needs to be inclusive and without bigotry. There is no dearth of examples of unethical treatment of refugees in contravention of the principle that protection to refugees must be given irrespective of race, religion or ethnicity. Perhaps, the Ukrainian refugee crisis, starting in late February 2022, has provided ample evidence of this kind of xenophobic bigotry and racism existing in the world. At the very least, the war in Ukraine provides a watershed moment for European countries, in that refugees fleeing generalized violence are not perceived as bogus but real.</p>
+                <p>So, as we observe a gradual erosion of compassion, whatever is left is given to those who share  similar racial identities and backgrounds. On a global level, we observe an extremely disproportionate level of caring for forcibly displaced people between wealthy countries and less developed countries. Poor countries often seem more generous than wealthy countries. The <a id="cit-2" href="#ref-2" class="citation-link">BBC report</a> on March 17, 2022  of a Burundian farmer <sup><span class="tooltips" data-bs-toggle="tooltip" title="" data-bs-original-title="Former refugee donates his maize crop to Ukraine - BBC 
+                News, March 17, 2022">2</span></sup>, who donated his crops to Ukrainian refugees is, in a microscopic way, an example of the unconditional generosity from the Global South. Such a generous act ought to shake us out of our lethargy and jolt us to rethink our habits and our shared humanity and reclaim human values of caring, free of racism and bigotry.</p>
+                <p>Displaced people must not be seen as burdens.  Throughout history, people have moved around from one region to another for a variety of reasons. Migration has been a part of human history long before borders existed. The <a id="cit-3" href="#ref-3" class="citation-link">International Labour Organization (ILO) in its report</a> of 2004 for its 92nd session quite aptly states the following:</p>
+                <p>“Since human beings first emerged from the African continent many thousands of years ago, every part of the world has been subject to overlapping waves of immigration. It has thus been a central part of history – shaping and reshaping societies, cultures and economies. The twenty-first century is no exception. The millions of migrants who circulate around Asia or Africa, or who travel from developing to developed countries today, are just the latest bearers of an age-old tradition” <sup><span class="tooltips" data-bs-toggle="tooltip" title="" data-bs-original-title="Migrant Workers in the Global Economy – International Labour Conference -92 session – Geneva (page 17)">3</span></sup></p>
+                <p>This is the stark reality. However, when sovereign states began to exercise absolute authority within their territories, states started to put an end to the free movement of people and began intensifying control over immigration. Thus, governments can decide on who to admit or who to refuse as they become increasingly protective of their borders. The fact is, migration has remained and will always remain a common feature of human activity. And yet, most unfortunately, migration has seldom been accepted nor taken as a global policy priority and debate for the world until the 20th century. Globally, there are few legal frameworks governing the movement of people.   One exception is the 1951 Convention relating to refugees, which states the right of refugees to leave their own countries and to be protected in international law. Even this law, which deals only with refugees. has lots of flaws and risks becoming obsolete. The most recent progress in this regard was the Global Compact for Safe, Orderly and Regular Migration, which was adopted on 19th December 2018 but has not been formally ratified.</p>
+                <p>Today, migration has become a politically charged issue in the public discourse, and even more so in national elections. The negative narrative around migration is eroding our values, humanity’s compassion toward one another, and our solidarity.</p>
+                <p>In my thirty years of service to refugees, I have visited refugee camps, interviewed refugees, heard their painful stories and resettled thousands of them. A significant number of these are from the Horn of Africa. This book is a recollection of my life history and my career spanning over four decades. The book contains a set of reflections and observations from my experience in this vast field of migration; my exposure to the West, my work with the Ethiopian government, and finally my life and career in Canada as Director of the Refugee Resettlement Program of Canadian Lutheran World Relief.</p>
+                <p>
+                This book largely refers to Africa, and in particular to the Horn of Africa. This sub-region  includes Djibouti, Eritrea,  Kenya, Sudan, South  Sudan, Somalia, and Ethiopia   – a country which can trace its independent existence for more than two thousand years and currently has a population of over 110 million people. More significant than being a regional powerhouse, Ethiopia is also the cradle of humanity. Lucy, the grandmother of humanity, lived in Ethiopia some 3.8 million years ago, in a place just about two hundred kilometers from where I was born. In her young adult life, Lucy must also have moved from place to place, at least in search of food and water, or just for basic survival. It is this human instinct for mobility and for survival that is being described today as ‘irregular migration’ and therefore discouraged and denied through restrictive immigration measures.
+                </p>
+                <p>
+                Besides being a cradle of humanity, Ethiopia's contribution to providing sanctuary to people who are persecuted and who are in distress is an even more important part of its history. In the late 1800s  , significant numbers of Greeks fled the Greek Genocide and found refuge in Ethiopia. Before the Greeks, the Armenians had found a safe haven in Ethiopia as far back as the 13th century. During the Armenian Genocide in 1915-1920, large number of Armenians fled to Ethiopia and settled there. The Greeks and the Armenians, their children and grandchildren are now naturalized citizens in Ethiopia. This moral duty of Ethiopians, first towards the Muslims eight centuries ago, and later to Armenians and to Greeks a century ago, is the foundation of asylum and an epitome of philoxenia of the highest standard. Sadly, Ethiopia’s groundbreaking contribution to human civilization through this act of welcoming and embracing refugees has not been recognized.
+                </p>
+                <p>
+                Paradoxically, emigration of Ethiopians has seen a significant rise in the last half century to the extent where the size of the Ethiopian diaspora has reached almost 3 million. The causes are juxtaposed and interlocking, ranging from natural causes to man-made or both. The challenges are both internal and external. Those who flee to neighboring countries do so due to causes of fear of life, liberty and basic security. In all, the major drivers of migration for Ethiopians include the denial of political, civic, economic, social and cultural rights, violations of human rights and fundamental freedoms, massive unemployment, social unrest, internal and international armed conflicts, and acts of aggression.  Those who are internally displaced in Ethiopia far outnumber those who cross borders. The causes of internal displacement  are similar; they include recurring failures in agricultural production and underdevelopment, widespread poverty and famine, disenfranchisement, and interethnic tensions. In contemporary Ethiopia, the number of those who are internally displaced has been fluctuating – in September 2019, when it was at its highest, the number of those internally displaced had reached almost 3 million. The Horn of Africa   contains the largest number of internally displaced people in the world.
+                </p>
+                <p>
+                This book also explores the genesis of the refugee problem in Africa as a consequence of colonialism. While doing so, I will attempt to explain why Ethiopia, which has never been colonized, generates the most refugees. Although the movement of people in and out of the Horn of Africa dates back to many hundreds, if not thousands of years, primarily driven by trade and commerce, I will focus on the contemporary movement of people. In the past century, the movement of people tended to be more local and occurred in areas where there were common affinities. In particular, in times of natural disaster such as drought and famine, people moved to areas where they share common cultural and religious values. With globalization and the invention and widespread application of information technology, the movements are across continents and oceans.
+                </p>
+                <p>
+                I have tried to marry significant periods of Ethiopia’s migration with pivotal moments in Ethiopia’s history. This book, although it focuses on forced displacement and its causes, also sees opportunities. Although conflict and climate change seem chronic crises, they offer opportunities; for, a crisis is not a permanent situation but a temporary and specific one during which one of three things will happen. Either the crisis will intensify, the situation will degenerate; or the crisis will offer an opportunity for a positive transformation to occur. The wider Horn of Africa region is in this exact situation, meaning that the peoples will either make substantive changes to vanquish poverty, famine, conflict and displacement, or succumb to those problems and be doomed.
+                </p>
+                <p>
+                The end result of this struggle between destruction and construction, between degeneration and regeneration will be won by what is done proactively.  If we are lulled into a false sense of security and allow conflicts and potential for chaos to continue, festering <em>après moi, le deluge</em>, then the present crisis, like a powerful time-bomb, will explode into what can only be termed a catastrophe of apocalyptic proportions. If, on the other hand, we strive for a reorientation and evaluation of the policies which have led the region into this present crisis and open our eyes to the possibility of a better alternative, we may turn things around enough to transform the crisis into an opportunity.
+                </p>
+                <p>
+                In writing this book, I am conscious of the fact that there are a myriad of issues making up the humanitarian crisis such as chronic underdevelopment and extreme poverty, massive refugee flows, internal displacement and increasingly marginalized populations. I am also conscious of the fact that these problems cannot be sufficiently addressed in a short book like this.Therefore, my main focus is on the issues contributing to refugees and Internally Displaced Persons (IDPs), which I felt needed urgent attention. First, what are the causes of forced displacement? What is the genesis of the African refugee situation? Then, I describe the pivotal moments in Ethiopia’s history which led to refugee movements leading up to the contemporary refugee movements. How can the region work together to address forced displacement and, more broadly, to change the humanitarian crisis into an opportunity to chart a better future for the country and for the region.
+                </p>
+                <p>
+                The question may be asked, “Is the book about the wider Horn of Africa region or is it about Ethiopia?” Because the Horn of Africa is a region in which all the peoples are in perennial conflict, and where cyclical famine, violations of human rights and refugee movements are commonly shared and cause transboundary effects, the problems in one country spill over into another with the result that all these countries face not only common challenges but must also establish a collective <em>raison de vivre</em> by giving new meaning and direction to their existence in order to emerge out of the entrenched crises. In addition, the countries of the region share common demography, ecosystem and economic interdependence which are vital for addressing the root causes. I have chosen to focus on Ethiopia as it is the region’s powerhouse; peace and stability in Ethiopia will have a positive impact on the whole region. If there is durable peace in Ethiopia, it becomes a lot easier to achieve not only economic cooperation among the countries of the sub-region but also address the common regional challenges. 
+                </p>
+                <p>
+                In my opinion, Ethiopia and the other Horn of Africa countries are at an historical juncture. During the past decades, instead of making substantial changes to vanquish poverty, famine and other social ills, they have both been in conflict with each other, and internally within themselves. Since the causes of the crises are so complex, so deep and so intricately linked, no single country can possibly expect to find solutions alone; all the peoples of the Horn must come together, pool their resources, and build a common vision for a better future.
+                </p>
+                <p>
+                The book is written in three parts, with the first part being my own story; how I grew up in a small neighborhood in the capital city and my brief experience of internal displacement at a very young age. The second part discusses the refugee/ migration history from Ethiopia - the continuum from temporary emigration in the 60s to more permanent displacement because of all the reasons  mentioned above - all of which are common within the borders of the Horn. While discussing the genesis of the refugee problem in Africa, I will attempt to dispel the general misconception of ‘root causes’ by giving an historical overview of the refugee issue in Africa.
+                </p>
+                <p>
+                My analysis is based on my personal observations, experiences and discussions with the people of the region over the last three decades. As well, I have been fortunate enough to pursue postgraduate studies in France where I focused on an honest investigation and impartial evaluation of the crisis in the Horn of Africa. Finally, while I was teaching a course at the University of British Columbia (UBC) on issues relating to Refugee Determination, I was compelled to clarify the ‘root causes’ as well as the underlying causes of contemporary refugee flows by linking them to the complex and contradictory issues of widespread conflict and climate change which threaten people's survival mechanisms.
+                </p>
+                <p>
+                The last part contains my reflections on the forced displacement situation. The purpose is to contribute to the contemporary global and regional discourse on addressing the challenge of forced displacement. The Syrian refugee issue and more recently the Ukrainian refugee issue have brought forcible displacement and migration matters very high on the global agenda. And yet, what we see on the ground is a world retreating from its commitments for responding to refugee’s needs in a fair and equitable manner. During the last decades, as refugees from the global south were heading north, European countries were closing their borders, building fences, taking punitive measures, to the extent that the phrase 'responsibility-sharing’ has become hollow and platitudinous to the millions of refugees who suffer.  In the concluding chapter, I will share my thoughts and insights for a more equitable, effective set of solutions which are not only consistent with international human rights and humanitarian law but also with our moral values.
+                </p>
+                <p>
+                This book does not purport to be an extensive analysis on forced displacement. Instead, it is a glimpse of the many aspects of forced displacement based on my own personal observations as well as the experiences I have had throughout my career. The first part, a rearview image of my own displacement, further promotes a  retroactive understanding  of what it means to be displaced: the insecurity, the fear of being caught in a crossfire, the trauma from the bombardement of my school and  a bullet stuck in my bedroom wall,  leaving my village and staying far away in a more secure area until things got normal and finally returning to my home to find out that some of our  neigbours have been either killed or detained.  Although it was a brief experience,  it has instilled in me, right from my young age,  that conflict produces death, destruction and displacement. My lived experience and exposure have shaped the way I see and understand the reasons that drive people into forced displacements. The second part of the book looks at the challenges of displacement from a different and somewhat provocative angle. It is my hope that this will contribute to the body of knowledge on refugees and migration and enrich the debate around forced displacement and the search for solutions.</p>
+                <p>
+                Fikre Mariam Tsehai<br>
+                Vancouver, BC, November 2022
+                </p></section><div class="row"><div class="col-6"><button id="a-0" type="button" class="me-auto btn btn-light                     pagination-button" onclick="goToSection('Introduction')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M10 22L0 12L10 2l1.775 1.775L3.55 12l8.225 8.225L10 22Z"/>
+                    </svg> Introduction</button>
+                </div><div class="col-6 d-flex"><button id="a-1" type="button" class="ms-auto btn btn-light pagination-button" onclick="goToSection('Chapter 1')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M6.23 20.23L8 22l10-10L8 2L6.23 3.77L14.46 12z"/></svg>
+                 Chapter 1</button>
+            </div>
+        </div>
+        </div>
+        <div class=" col-xs-12 col-md-3  mt-5 p-0">
+          <div class="tab_two">
+            <ul class="nav nav-tabs" id="myTabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#tab-3">
+                  Citations
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-4">
+                  Figures
+                </a>
+              </li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane fade show active p-0" id="tab-3">
+                  <div class="figures_data">
+                      <h4 class="text-center tab_figure_title">
+                          <strong>Citations</strong>
+                        </h4>
+                    <ul class="tab-two-ul">
+                      <li>
+                        <a href="#s-1">
+                          <i>
+                           <svg  width="16" height="16" viewBox="0 0 512 512"><path fill="currentColor" d="M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59c-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0c-59.27-59.26-59.27-155.7 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606c.648 17.722 3.826 35.527 9.69 52.721c1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96c28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83c-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 0 1-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0 1 20.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37c-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0 0 20.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 0 0-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569c-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51c27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612c5.864 17.194 9.042 34.999 9.69 52.721c.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z"/></svg>
+                          </i>
+                          United Nations. (n.d.). Convention relating to the Status of Refugees. In United Nations Conference of Plenipotentiaries on the Status of Refugees and Stateless Persons convened under General Assembly resolution 429 (V) of 14 December 1950. Retrieved from https://www.ohchr.org/en/instruments-mechanisms/instruments/convention-relating-status-refugees.
+                        </a>
+                      </li>
+                      <li>
+                        <a href="#s-2">
+                          <i>
+                           <svg  width="16" height="16" viewBox="0 0 512 512"><path fill="currentColor" d="M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59c-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0c-59.27-59.26-59.27-155.7 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606c.648 17.722 3.826 35.527 9.69 52.721c1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96c28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83c-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 0 1-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0 1 20.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37c-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0 0 20.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 0 0-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569c-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51c27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612c5.864 17.194 9.042 34.999 9.69 52.721c.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z"/></svg>
+                          </i>
+                          Gakwaya, F. (2022, March 17). Ex-refugee donates maize crop to Ukraine. BBC News. https://www.bbc.com/news/live/world-europe-60774819/page/6</a
+                        >
+                      </li>
+                      <li>
+                        <a href="#s-3">
+                          <i>
+                           <svg  width="16" height="16" viewBox="0 0 512 512"><path fill="currentColor" d="M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59c-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0c-59.27-59.26-59.27-155.7 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606c.648 17.722 3.826 35.527 9.69 52.721c1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96c28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83c-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 0 1-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0 1 20.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37c-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0 0 20.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 0 0-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569c-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51c27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612c5.864 17.194 9.042 34.999 9.69 52.721c.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z"/></svg> </i
+                          >Migrant Workers in the Global Economy – International Labour Conference -92 session – Geneva (page 17)</a
+                        >
+                      </li>
+                      <li>
+                        <a href="#s-4">
+                          Zwede Retta – The Government of Haile Selassie I – p. 262 (Addis Ababa 2012)</a
+                        >
+                      </li>
+                      <li>
+                        <a href="#s-4">
+                            Marcel Junod, Warrior Without Weapons, Geneva: International Committee of the Red Cross, 1982 PP. 35-38</a
+                        >
+                      </li>
+                      <li>
+                        <a href="#s-4">
+                            Richard Pankhurst, “The History of Firearms in Ethiopia Prior to the 19th Century”, Ethiopian Observer, XI/3 (1967) pp. 202225</a
+                        >
+                      </li>
+                      <li>
+                        <a href="#s-4">
+                            The Christian Science Monitor – Assessing Ethiopia’s Democratic Process, Robert M. Press, May 31, 1991</a
+                        >
+                      </li>
+                      <li>
+                        <a href="#s-4">
+                            U.N A/41/324 International Cooperation to Avert New Refugee Flows, May 13, 1985</a
+                        >
+                      </li>
+                      <li>
+                        <a href="#s-4">
+                            Sven Rubenson, Survival of Ethiopian Independence. London, 1976; p. 231</a
+                        >
+                      </li>
+                      <li>
+                        <a href="#s-4">
+                            Reverend William Moister, Conversations on the Rise, Progress, and Present State of Wesleyan Missions in Various Parts of the World (London: William Nichols, 1869), p. 100</a
+                        >
+                      </li>
+                    </ul>
+                  </div>
+              </div>
+              <!-- Figures -->
+              <div class="tab-pane fade" id="tab-4">
+                  <div class="figures_data">
+                    <h4 class="text-center tab_figure_title">
+                      <strong>Figures</strong>
+                    </h4>
+                  <ul class="tab-two-ul">
+                    <li>
+                      <a href="#s-1">
+                        <i>
+                          <svg width="20" height="20" viewBox="0 0 1920 1536">
+                            <path
+                              fill="currentColor"
+                              d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z"
+                            />
+                          </svg>
+                        </i>
+                        My years as a Boy Scout at TMS was a good part of my
+                        education experience.
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#s-2">
+                        <i>
+                          <svg width="16" height="16" viewBox="0 0 1920 1536">
+                            <path
+                              fill="currentColor"
+                              d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z"
+                            />
+                          </svg>
+                        </i>
+                        My host family in Goring-on-Thames, England</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#s-3">
+                        <i>
+                          <svg width="16" height="16" viewBox="0 0 1920 1536">
+                            <path
+                              fill="currentColor"
+                              d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z"
+                            />
+                          </svg> </i
+                        >Accepting my diploma from Emperor Haile Selassie in
+                        1973</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#s-4"></a>
+                        <i>
+                          <svg width="16" height="16" viewBox="0 0 1920 1536">
+                            <path
+                              fill="currentColor"
+                              d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z"
+                            />
+                          </svg> </i
+                        >Attending a disarmament conference at the United
+                        Nations in Geneva in the 80s</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#s-4">
+                        <i>
+                            <svg width="16" height="16" viewBox="0 0 1920 1536">
+                              <path
+                                fill="currentColor"
+                                d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z"
+                              />
+                            </svg>
+                          </i>
+                        My extended family - all lived in Ethiopia until 1977.
+                        In 2022, More than half are in the United States.</a
+                      >
+                    </li>
+                    <li>
+                      <a href="#s-4">
+                        <i>
+                            <svg width="16" height="16" viewBox="0 0 1920 1536">
+                              <path
+                                fill="currentColor"
+                                d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z"
+                              />
+                            </svg>
+                          </i>
+                        An Ethiopian Orthodox Church near Kakuma Refugee Camp in
+                        Turkana, Kenya - For the refugees who live under
+                        extremely difficult conditions, while no durable
+                        solutions are in sight, faith and hope are important
+                        coping mechanisms.</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <!-- End-Figures -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+  </body>
 </html>

@@ -1,0 +1,191 @@
+body {
+  font-family: "Open Sans", sans-serif;
+}
+
+.navbar {
+  background-color: black !important;
+}
+.navbar-brand {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 1.2em;
+}
+.open_book_icon {
+  font-size: 1.2em;
+}
+.navbar-toggler:focus {
+  color: rgba(255, 255, 255, 0.55);
+}
+.nav-images-links {
+  list-style: none;
+  width: 60px;
+}
+.nav-images-links img {
+  width: 100%;
+  height: auto;
+}
+.nav-link {
+  padding: 0;
+}
+.navbar-collapse .images_links_wrapper {
+  display: flex;
+  @media (max-width: 767px) {
+    justify-content: start !important;
+  }
+}
+.logo-title {
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+.body-content {
+  background-color: #fff;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  height: 100%;
+  font-family: "Times New Roman", Times, serif;
+}
+.tab_one,
+.tab_two {
+  background-color: #f6f6f6;
+  position: unset;
+  @media (min-width: 1400px) {
+    max-width: 328px;
+    width: 100%;
+    position: fixed;
+  }
+}
+#tab-1 .book_cover_wrapper {
+  @media (max-width: 767px) {
+    display: inline-flex;
+    gap: 24px;
+  }
+}
+#tab-1 img {
+  width: 100%;
+  height: 400px;
+}
+
+#myTabs {
+  display: flex;
+  border: none;
+}
+#myTabs li {
+  flex: 1;
+}
+#myTabs li .nav-link {
+  padding: 8px 16px;
+  background-color: #d9d9d9;
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#myTabs li .nav-link.active {
+  background-color: black;
+  color: #fff;
+}
+
+.tab_1_content {
+  padding-top: 1.5rem;
+}
+#tab-2 {
+  background-color: #fff;
+}
+.table_content {
+  background-color: #ebebeb;
+}
+.accordion-button {
+  background-color: #d9d9d9;
+  text-transform: capitalize;
+}
+.accordion-button:not(.collapsed) {
+  color: #ffffff;
+  background-color: #333;
+}
+.accordion-item button:focus:not(:focus-visible) {
+  box-shadow: none;
+}
+.accordion-body {
+  background-color: #f6f6f6;
+}
+.accordion {
+  height: 70vh;
+  overflow-y: overlay;
+
+  @media (max-width: 767px) {
+    height: 25vh;
+  }
+}
+
+.accordion-body li {
+  list-style: none;
+}
+.accordion-body ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+.accordion-body ul li {
+  color: black;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.accordion-body ul li:last-child {
+  border-bottom: none;
+}
+.accordion-body ul li a {
+  color: black;
+  text-decoration: none;
+}
+.accordion-body ul li a:hover {
+  color: #0d6efd;
+}
+.tab-two-ul {
+  padding: 0;
+  background-color: #f6f6f6;
+}
+.tab-two-ul svg {
+  font-weight: 900;
+}
+.tab-two-ul li {
+  padding: 0 24px;
+  list-style: none;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.tab-two-ul li:last-child {
+  border-bottom: none;
+}
+.tab-two-ul li a:hover {
+  color: #014f86;
+}
+.tab-two-ul a {
+  color: black;
+  text-decoration: none;
+  word-wrap: break-word;
+}
+.figures_data {
+  height: 70vh;
+  overflow-y: overlay;
+  background-color: #f6f6f6;
+  @media (max-width: 767px) {
+    height: 25vh;
+  }
+}
+.tab_figure_title {
+  padding-top: 16px;
+  padding-bottom: 0;
+  margin: 10px 0;
+}
+.pagination-button:hover {
+  background-color: black;
+  color: #fff;
+}
