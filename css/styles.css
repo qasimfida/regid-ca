@@ -185,6 +185,10 @@ body {
   padding-bottom: 0;
   margin: 10px 0;
 }
+.pagination-button {
+  display: flex;
+  align-items: center;
+}
 .pagination-button:hover {
   background-color: black;
   color: #fff;
