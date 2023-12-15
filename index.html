@@ -3,26 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-      crossorigin="anonymous"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
+    <title>Form with Modal</title>
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      integrity="sha512-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     />
     <link rel="stylesheet" href="./css/styles.css" />
   </head>
+
   <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-dark fixed-top">
       <div class="container-fluid">
@@ -96,331 +84,30 @@
     <div class="container body-content">
       <div class="row">
         <div class="col-xs-12 col-md-3 mt-5 p-0">
-          <div class="tab_one">
-            <ul class="nav nav-tabs" id="myTabs">
-              <li class="nav-item">
-                <a class="nav-link active" data-bs-toggle="tab" href="#tab-1">
-                  <svg width="0.88em" height="1em" viewBox="0 0 448 512">
-                    <path
-                      fill="currentColor"
-                      d="M96 0C43 0 0 43 0 96v320c0 53 43 96 96 96h320c17.7 0 32-14.3 32-32s-14.3-32-32-32v-64c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H96zm0 384h256v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16zm16 48h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16z"
-                    />
-                  </svg>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#tab-2">
-                  <svg width="1em" height="1em" viewBox="0 0 512 512">
-                    <path
-                      fill="currentColor"
-                      d="M464 480H48c-26.51 0-48-21.49-48-48V80c0-26.51 21.49-48 48-48h416c26.51 0 48 21.49 48 48v352c0 26.51-21.49 48-48 48zM128 120c-22.091 0-40 17.909-40 40s17.909 40 40 40s40-17.909 40-40s-17.909-40-40-40zm0 96c-22.091 0-40 17.909-40 40s17.909 40 40 40s40-17.909 40-40s-17.909-40-40-40zm0 96c-22.091 0-40 17.909-40 40s17.909 40 40 40s40-17.909 40-40s-17.909-40-40-40zm288-136v-32c0-6.627-5.373-12-12-12H204c-6.627 0-12 5.373-12 12v32c0 6.627 5.373 12 12 12h200c6.627 0 12-5.373 12-12zm0 96v-32c0-6.627-5.373-12-12-12H204c-6.627 0-12 5.373-12 12v32c0 6.627 5.373 12 12 12h200c6.627 0 12-5.373 12-12zm0 96v-32c0-6.627-5.373-12-12-12H204c-6.627 0-12 5.373-12 12v32c0 6.627 5.373 12 12 12h200c6.627 0 12-5.373 12-12z"
-                    />
-                  </svg>
-                </a>
-              </li>
+          <div class="all_books_lists_Wrapper">
+            <!-- Book List -->
+            <ul id="bookList" class="all_books_lists">
+              <div class="Add_book_wrapper">
+                <!-- Button to trigger modal -->
+                <button
+                  class="btn model_button"
+                  data-bs-toggle="modal"
+                  data-bs-target="#exampleModal"
+                >
+                  Add a Book
+                </button>
+              </div>
+              <ul id="itemList" class="list-group all_books_list mt-3"></ul>
             </ul>
-            <!-- Tab panes -->
-            <div class="tab-content">
-              <div class="tab-pane fade show active px-3 py-3" id="tab-1">
-                <div class="book_cover_wrapper">
-                  <div class="book-cover-img">
-                    <img
-                      src="./assets/images//AWP_Cover.jpeg"
-                      alt="book-cover"
-                    />
-                  </div>
-                  <div class="tab_1_content">
-                    <h6><strong>Unmasking Forced Displacement</strong></h6>
-                    <h6>Fikre Mariam Tsehai</h6>
-                    <h6>Copyright © 2024, Fikre Mariam Tsehai</h6>
-                    <hr style="width: 80%" />
-                    <h6>Book &amp; Cover design by Walk With Web Inc.</h6>
-                  </div>
-                </div>
-              </div>
-              <!-- Book-Tab-Details -->
-              <div class="tab-pane fade" id="tab-2">
-                <h4 class="mb-0 py-3 text-center table_content">
-                  <strong>Table of Contents</strong>
-                </h4>
-                <div class="accordion" id="accordionExample">
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingOne">
-                      <button
-                        class="accordion-button"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseOne"
-                        aria-expanded="true"
-                        aria-controls="collapseOne"
-                      >
-                        Introduction
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseOne"
-                      class="accordion-collapse collapse show"
-                      aria-labelledby="headingOne"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1">Title Page</a>
-                          </li>
-                          <li>
-                            <a href="#s-2">Copyright Materials</a>
-                          </li>
-                          <li>
-                            <a href="#s-3">A Foreword by David Matas</a>
-                          </li>
-                          <li>
-                            <a href="#s-4">Introduction</a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingTwo">
-                      <button
-                        class="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseTwo"
-                        aria-expanded="false"
-                        aria-controls="collapseTwo"
-                      >
-                        Chapter 1
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseTwo"
-                      class="accordion-collapse collapse"
-                      aria-labelledby="headingTwo"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1"
-                              >The Taste of Displacement at a Young Age</a
-                            >
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingThree">
-                      <button
-                        class="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseThree"
-                        aria-expanded="false"
-                        aria-controls="collapseThree"
-                      >
-                        Chapter 2
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseThree"
-                      class="accordion-collapse collapse"
-                      aria-labelledby="headingThree"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1">Choice and Dilemma</a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingFourth">
-                      <button
-                        class="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseFourth"
-                        aria-expanded="false"
-                        aria-controls="collapseFourth"
-                      >
-                        Chapter 3
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseFourth"
-                      class="accordion-collapse collapse"
-                      aria-labelledby="headingFourth"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1">Comfortable Exile in Geneva</a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingFive">
-                      <button
-                        class="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseFive"
-                        aria-expanded="false"
-                        aria-controls="collapseFive"
-                      >
-                        Chapter 4
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseFive"
-                      class="accordion-collapse collapse"
-                      aria-labelledby="headingFive"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1">To Canada?</a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingSix">
-                      <button
-                        class="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseSix"
-                        aria-expanded="false"
-                        aria-controls="collapseSix"
-                      >
-                        Chapter 5
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseSix"
-                      class="accordion-collapse collapse"
-                      aria-labelledby="headingSix"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1"
-                              >The Root Causes of the African Refugee Crisis</a
-                            >
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingSeventh">
-                      <button
-                        class="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseSeventh"
-                        aria-expanded="false"
-                        aria-controls="collapseSeventh"
-                      >
-                        Chapter 6
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseSeventh"
-                      class="accordion-collapse collapse"
-                      aria-labelledby="headingSeventh"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1"
-                              >Drought and Conflict -- The Dual Drivers of
-                              Displacement</a
-                            >
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingEight">
-                      <button
-                        class="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseEight"
-                        aria-expanded="false"
-                        aria-controls="collapseEight"
-                      >
-                        Chapter 7
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseEight"
-                      class="accordion-collapse collapse"
-                      aria-labelledby="headingEight"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1"
-                              >The Ethiopian Diaspora -- that Build and
-                              Cripple</a
-                            >
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingNine">
-                      <button
-                        class="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseNine"
-                        aria-expanded="false"
-                        aria-controls="collapseNine"
-                      >
-                        Chapter 8
-                      </button>
-                    </h2>
-                    <div
-                      id="collapseNine"
-                      class="accordion-collapse collapse"
-                      aria-labelledby="headingNine"
-                      data-bs-parent="#accordionExample"
-                    >
-                      <div class="accordion-body">
-                        <ul>
-                          <li>
-                            <a href="#s-1">Reflections</a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- End-Book-Tab-Details -->
+            <!-- Book List End -->
+            <!-- Book Details -->
+            <div id="bookDetails" class="all_books_details">
+              <div id="bookDetailsContent"></div>
             </div>
+            <!-- Book Details End -->
           </div>
         </div>
+
         <div class="col-xs-12 col-md-6 mt-5">
           <a id="awp-top"></a>
           <!--Pagination-Content-->
@@ -777,12 +464,175 @@
           </div>
         </div>
       </div>
+
+      <!-- ADD BOOK MODAL -->
+      <div
+        class="modal fade"
+        id="exampleModal"
+        tabindex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Add New Item</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <form id="modalForm" autocomplete="off">
+                <div class="mb-3">
+                  <label for="itemName" class="form-label">Book Name:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="itemName"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label for="itemDescription" class="form-label"
+                    >Description:</label
+                  >
+                  <textarea
+                    class="form-control"
+                    id="itemDescription"
+                    rows="3"
+                    required
+                  ></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="creditby" class="form-label">Credit By</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="creditby"
+                    required
+                  />
+                </div>
+                <div
+                  action="#"
+                  method="post"
+                  enctype="multipart/form-data"
+                  id="imageUploadForm"
+                >
+                  <input
+                    type="file"
+                    name="image"
+                    id="image"
+                    accept="image/*"
+                    onchange="uploadImage()"
+                  />
+                  <div id="imagePreview"></div>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ADD BOOK MODAL END-->
+
+      <!-- ADD CHAPTER MODAL -->
+      <div
+        class="modal fade"
+        id="addChapterModal"
+        tabindex="-1"
+        aria-labelledby="addChapterModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addChapterModalLabel">
+                Add New Chapter
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <form id="chapterForm" autocomplete="off">
+                <div class="mb-3">
+                  <label for="chapterTitle" class="form-label"
+                    >Chapter Title:</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="chapterTitle"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-success"
+                  onclick="saveChapter()"
+                >
+                  Save
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ADD CHAPTER MODAL END -->
+
+      <!-- Bootstrap Modal for Delete Confirmation -->
+      <div
+        class="modal fade"
+        id="deleteConfirmationModal"
+        tabindex="-1"
+        aria-labelledby="deleteConfirmationModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="deleteConfirmationModalLabel">
+                Are you sure?
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p>Do you really want to delete this item?</p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                id="confirmDeleteBtn"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     <script src="./js/main.js"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-      crossorigin="anonymous"
-    ></script>
   </body>
 </html>

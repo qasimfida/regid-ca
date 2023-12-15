@@ -46,6 +46,16 @@ body {
   height: 100%;
   font-family: "Times New Roman", Times, serif;
 }
+.body-content .hide {
+  display: none;
+}
+.body-content .books_list {
+  width: 100%;
+}
+.body-content .books_list tr {
+  display: flex;
+  justify-content: space-between;
+}
 .tab_one,
 .tab_two {
   background-color: #f6f6f6;
@@ -90,6 +100,56 @@ body {
 .tab_1_content {
   padding-top: 1.5rem;
 }
+/* Not used CSS end */
+
+.all_books_lists_Wrapper {
+  height: 70vh;
+  background-color: #f6f6f6;
+  overflow: auto;
+}
+
+.all_books_lists {
+  list-style: none;
+  gap: 16px;
+  padding: 0;
+}
+.books_titles_wrapper {
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+  margin-top: 20px;
+}
+.all_books_lists .book_title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.all_books_lists li {
+  display: flex;
+  justify-content: space-between;
+}
+.all_books_lists svg {
+  cursor: pointer;
+}
+.all_books_lists svg:hover {
+  color: #0d6efd;
+}
+.dropdown-toggle::after {
+  display: none;
+}
+
+.all_books_lists a {
+  font-weight: 700;
+  color: black;
+  text-decoration: none;
+}
+.all_books_lists a:hover {
+  color: #0d6efd;
+}
+.dropdown-menu a:active {
+  background-color: black;
+  color: #fff;
+}
 #tab-2 {
   background-color: #fff;
 }
@@ -127,7 +187,6 @@ body {
   flex-direction: column;
   gap: 4px;
   margin: 0;
-  padding: 0;
 }
 .accordion-body ul li {
   color: black;
@@ -192,4 +251,181 @@ body {
 .pagination-button:hover {
   background-color: black;
   color: #fff;
+}
+.Add_book_wrapper {
+  display: flex;
+  justify-content: center;
+  /* border: 1px solid black; */
+  margin-bottom: 16px;
+}
+.model_button {
+  background-color: black;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 0.25rem;
+  box-shadow: none;
+  width: 100%;
+  margin: 0;
+}
+.add_chapter_button {
+  background-color: #d9d9d9;
+  color: black;
+  padding: 8px 16px;
+  border-radius: 0.25rem;
+  box-shadow: none;
+  width: -webkit-fill-available;
+  margin: 30px 12px;
+}
+.add_chapter_button:hover {
+  background-color: black;
+  color: #fff;
+}
+.back_button {
+  background-color: transparent;
+  color: white;
+  padding: 0;
+  border-radius: 0.25rem;
+  box-shadow: none;
+  border: none;
+}
+.back_button:hover {
+  color: #0d6efd;
+}
+.model_button:hover {
+  background-color: black;
+  color: #0d6efd;
+}
+.book-name {
+  font-size: 17px;
+}
+.book-name:hover {
+  cursor: pointer;
+  color: #0d6efd;
+}
+
+#bookDetailsContent ul {
+  padding: 0;
+}
+#dropdownMenuButton {
+  box-shadow: none;
+  outline: none;
+  border: none;
+}
+.book_name_value {
+  text-align: center;
+  font-weight: 700;
+  padding: 0;
+  margin: 0;
+  font-size: 17px;
+}
+
+.all_books_list {
+  padding: 8px 12px;
+  gap: 12px;
+  border-radius: none !important;
+}
+.all_books_list li {
+  font-weight: 700;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid #d9d9d9;
+  background: transparent;
+  padding-bottom: 12px;
+  border-radius: unset !important;
+}
+
+.dropdown-menu.show {
+  font-weight: 700;
+  padding: 16px 0;
+  border: none !important;
+  box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
+}
+.dropdown-menu.show li {
+  padding: 0;
+}
+.input_wrapper {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.input_wrapper input {
+  width: 100%;
+  max-width: 350px;
+  border-radius: 0.25rem;
+  border: 1px solid #d9d9d9;
+  padding: 10px 12px;
+}
+.input_wrapper input:focus-visible {
+  outline: none;
+}
+.modal-dialog {
+  max-width: 700px;
+}
+.input_label {
+  margin-bottom: 6px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+#imageUploadForm {
+  margin-top: 16px;
+}
+#imagePreview {
+  margin-top: 10px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 350px;
+  height: 200px;
+  border-radius: 0.25rem;
+  border: 1px solid #d9d9d9;
+}
+#imagePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.25rem;
+}
+.cancel_btn {
+  max-width: 100px;
+  width: 100%;
+  font-weight: 600;
+  box-shadow: none;
+  background-color: #d9d9d9;
+}
+.cancel_btn:hover {
+  color: #fff;
+  background-color: black;
+}
+.save_btn {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 0.25rem;
+  max-width: 100px;
+  width: 100%;
+  font-weight: 600;
+  box-shadow: none;
+  color: #fff;
+  background-color: black;
+}
+.save_btn:hover {
+  color: #fff;
+}
+.title_label_error .error_input {
+  color: red;
+}
+.book_detils_header {
+  background-color: black;
+  color: #fff;
+  padding: 16px 12px;
+  gap: 10px;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 0.25rem;
+}
+.add_chapter_accordion::before {
+  display: none;
+}
+.accordion-button::after {
+  display: none;
 }
