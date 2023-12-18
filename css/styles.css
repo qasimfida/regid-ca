@@ -41,10 +41,11 @@ body {
 }
 .body-content {
   background-color: #fff;
-  margin-top: 3rem;
-  margin-bottom: 3rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
   height: 100%;
-  font-family: "Times New Roman", Times, serif;
+  height: auto;
+  max-height: 100vh;
 }
 .body-content .hide {
   display: none;
@@ -55,6 +56,11 @@ body {
 .body-content .books_list tr {
   display: flex;
   justify-content: space-between;
+}
+#content {
+  height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
+  overflow: auto;
 }
 .tab_one,
 .tab_two {
@@ -103,9 +109,10 @@ body {
 /* Not used CSS end */
 
 .all_books_lists_Wrapper {
-  height: 70vh;
-  background-color: #f6f6f6;
+  height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
   overflow: auto;
+  background-color: #f6f6f6;
 }
 
 .all_books_lists {
@@ -171,8 +178,8 @@ body {
   background-color: #f6f6f6;
 }
 .accordion {
-  height: 70vh;
-  overflow-y: overlay;
+  height: calc(100vh - 300px);
+  overflow-y: auto;
 
   @media (max-width: 767px) {
     height: 25vh;
@@ -183,10 +190,7 @@ body {
   list-style: none;
 }
 .accordion-body ul {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 0;
+
 }
 .accordion-body ul li {
   color: black;
@@ -232,8 +236,9 @@ body {
   word-wrap: break-word;
 }
 .figures_data {
-  height: 70vh;
-  overflow-y: overlay;
+  height: calc(100vh - 142px);
+  max-height: calc(100vh - 142px);
+  overflow: auto;
   background-color: #f6f6f6;
   @media (max-width: 767px) {
     height: 25vh;
@@ -428,4 +433,30 @@ body {
 }
 .accordion-button::after {
   display: none;
+}
+
+
+
+
+::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+  height: 8px; /* Width of the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Color of the scrollbar track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888; /* Color of the scrollbar thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Color of the scrollbar thumb on hover */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin; /* "auto" or "thin" */
+  scrollbar-color: #888 #f1f1f1; /* thumb and track color */
 }
