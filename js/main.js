@@ -6,6 +6,38 @@ let activeSection = 0;
 let activeChapter = 0;
 let itemIdCounter = 0;
 
+const base_url = "http://localhost:80/books";
+
+async function fetchData(url) {
+	try {
+		const response = await fetch(`${base_url}${url}`);
+		return response.json();
+	} catch (err) {
+		return err;
+	}
+}
+
+async function postData(url, body, options={}) {
+
+
+    const content = {
+        method: "POST",
+        body,
+        ...options
+    };
+    try {
+        const response = await fetch(`${base_url}${url}`, content);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (err) {
+        throw err; // Re-throwing the error makes it possible for the caller to handle it
+    }
+}
+
 // BOOKS CRUD
 
 const modal = new bootstrap.Modal(document.getElementById("addBookModal"));
@@ -26,38 +58,45 @@ modal._element.addEventListener("hidden.bs.modal", function () {
 });
 
 // Function to add or update an item in the list
-function saveBook() {
+async function saveBook() {
 	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
 
-	const book = {
-		id: selectedBook || Math.floor(Math.random() * 1234567890),
-		name: document.getElementById("itemName").value,
-		description: document.getElementById("itemDescription").value,
-		creditBy: document.getElementById("creditby").value,
-		bookImage: document.querySelector("#imagePreview img").src,
-		chapters: [],
-	};
+	const formData = new FormData();
+
+	const image = document.getElementById("image");
+	if (image?.files && image?.files?.[0]) {
+		formData.image = image?.files?.[0];
+	}
+
+	formData.book_title = document.getElementById("itemName").value;
+	formData.description = document.getElementById("itemDescription").value;
+	formData.author = document.getElementById("creditby").value;
+
 	if (selectedBook) {
-		books = books.map((b) => {
-			if (`${b.id}` === selectedBook)
-				return {
-					...b,
-					...book,
-				};
-			else return { ...b };
-		});
+		const res = await postData("/books/", formData);
+		console.log(res);
+		// books = books.map((b) => {
+		// 	if (`${b.id}` === selectedBook)
+		// 		return {
+		// 			...b,
+		// 			...book,
+		// 		};
+		// 	else return { ...b };
+		// });
 	} else {
-		books.push(book);
+		const res = postData("/books/", formData);
+		console.log(res);
+		// books.push(book);
 	}
 	sessionStorage.setItem("books", JSON.stringify(books));
-	showBookList();
+	// showBookList();
 
 	// Reset the form
-	document.getElementById("modalForm").reset();
-	document.getElementById("image").value = "";
+	// document.getElementById("modalForm").reset();
+	// document.getElementById("image").value = "";
 	selectedBook = 0;
 
-	modal.hide();
+	// modal.hide();
 }
 
 // Function to add a new item to the list
@@ -68,30 +107,30 @@ function addBook(book) {
 	li.id = id;
 	li.className = "list-group-item d-flex justify-content-between align-items-center";
 	li.innerHTML = `
-    <span class="book-name d-flex w-100 justify-content-between " >
-		<span onclick="showBookDetails('${book.id}','${book.name}','${book.description}', '${book.bookImage}','${book.creditBy}')" >
-			<span> <img height="40px" width="40px" style="border-radius: 10px" src="${bookImage}"/> </span>
-			<span> ${name} </span>
+		<span class="book-name d-flex w-100 justify-content-between " >
+			<span onclick="showBookDetails('${book.id}','${book.name}','${book.description}', '${book.bookImage}','${book.creditBy}')" >
+				<span> <img height="40px" width="40px" style="border-radius: 10px" src="${bookImage}"/> </span>
+				<span> ${name} </span>
+			</span>
+			<div class="dropdown">
+				<button class="btn  btn-sm dropdown_btn dropdown-toggle" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+					<svg width="20" height="20" viewBox="0 0 24 24">
+						<path
+							fill="none"
+							stroke="currentColor"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
+						/>
+					</svg>
+				</button>
+				<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
+					<li><a class="dropdown-item" href="#" onclick="editBook('${book.id}','${book.name}','${book.description}', '${book.bookImage}','${book.creditBy}')">Edit</a></li>
+					<li><a class="dropdown-item" href="#" onclick="showDeleteConfirmation('${id}')">Delete</a></li>
+				</ul>
+			</div>
 		</span>
-      	<div class="dropdown">
-			<button class="btn  btn-sm dropdown_btn dropdown-toggle" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-				<svg width="20" height="20" viewBox="0 0 24 24">
-					<path
-						fill="none"
-						stroke="currentColor"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
-					/>
-				</svg>
-			</button>
-			<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
-				<li><a class="dropdown-item" href="#" onclick="editBook('${book.id}','${book.name}','${book.description}', '${book.bookImage}','${book.creditBy}')">Edit</a></li>
-				<li><a class="dropdown-item" href="#" onclick="showDeleteConfirmation('${id}')">Delete</a></li>
-			</ul>
-		</div>
-   	</span>
 	`;
 
 	itemList.appendChild(li);
@@ -303,7 +342,9 @@ function showBookDetails(id) {
 }
 
 // Function to show book list
-function showBookList() {
+async function showBookList() {
+	const res = await fetchData("/books");
+	console.log({ res });
 	const books = JSON.parse(sessionStorage.getItem("books") || "[]");
 	const list = document.getElementById("book-list");
 	list.innerHTML = "";
@@ -362,7 +403,7 @@ let chapterIdCounter = 0;
 function showChapterList() {
 	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
 	const book = books.find((book) => `${book.id}` === selectedBook);
-	const chapters = book?.chapters || []
+	const chapters = book?.chapters || [];
 	// Add the chapter to the list
 	const accordion = document.getElementById("accordionExample");
 	accordion.innerHTML = "";
@@ -372,7 +413,7 @@ function showChapterList() {
 		}
 		addChapterToList(chapters[i], chapters);
 	}
-	document.getElementById('bookTitle').innerHTML = book.name
+	document.getElementById("bookTitle").innerHTML = book.name;
 }
 function handleChapterClick(id) {
 	activeChapter = id;
@@ -489,12 +530,14 @@ function listSections(sections = []) {
 	console.log({ sections });
 	let str = "";
 	if (sections.length) {
-		str = sections.map((section) => {
-			const sectionId = `${section.id}`;
-			return `<div class="content-section" >
+		str = sections
+			.map((section) => {
+				const sectionId = `${section.id}`;
+				return `<div class="content-section" >
 			<div id="${sectionId}" ><strong>${section.content}</strong></div>
 		</div>`;
-		}).join(`<br/><br/>`);
+			})
+			.join(`<br/><br/>`);
 	} else {
 		str = `No content`;
 	}
@@ -502,54 +545,53 @@ function listSections(sections = []) {
 }
 
 function handleSubmit() {
-    const sectionDetails = {
-        id: selectedSection || Math.floor(Math.random() * 1234567890),
-        name: document.getElementById("section-name").value,
-        content: document.getElementById("section-content").value,
-    };
+	const sectionDetails = {
+		id: selectedSection || Math.floor(Math.random() * 1234567890),
+		name: document.getElementById("section-name").value,
+		content: document.getElementById("section-content").value,
+	};
 
-    let books = JSON.parse(sessionStorage.getItem("books") || "[]");
-    books = updateBooks(books, sectionDetails);
-    sessionStorage.setItem("books", JSON.stringify(books));
+	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
+	books = updateBooks(books, sectionDetails);
+	sessionStorage.setItem("books", JSON.stringify(books));
 }
 
 function updateBooks(books, sectionDetails) {
-    return books.map(book => {
-        if (`${book.id}` === selectedBook) {
-            return {
-                ...book,
-                chapters: updateChapters(book.chapters, sectionDetails),
-            };
-        }
-        return book;
-    });
+	return books.map((book) => {
+		if (`${book.id}` === selectedBook) {
+			return {
+				...book,
+				chapters: updateChapters(book.chapters, sectionDetails),
+			};
+		}
+		return book;
+	});
 }
 
 function updateChapters(chapters, sectionDetails) {
-    return chapters.map(chapter => {
-        if (`${chapter.id}` !== `${chapterId}`) {
-            return {
-                ...chapter,
-                sections: updateSections(chapter.sections, sectionDetails),
-            };
-        }
-        return chapter;
-    });
+	return chapters.map((chapter) => {
+		if (`${chapter.id}` !== `${chapterId}`) {
+			return {
+				...chapter,
+				sections: updateSections(chapter.sections, sectionDetails),
+			};
+		}
+		return chapter;
+	});
 }
 
 function updateSections(sections, sectionDetails) {
-    return sections.map(section => {
-        if (`${section.id}` === `${sectionId}`) {
-            return { ...section, ...sectionDetails };
-        }
-        return section;
-    });
+	return sections.map((section) => {
+		if (`${section.id}` === `${sectionId}`) {
+			return { ...section, ...sectionDetails };
+		}
+		return section;
+	});
 }
 
-
 function addSection() {
-	selectedSection = 0
-	activeSection = 0
+	selectedSection = 0;
+	activeSection = 0;
 	addSectionModal.show();
 	document.getElementById("sectionForm").reset();
 }
@@ -578,7 +620,10 @@ function saveSection() {
 						let sections = c.sections || [];
 						if (selectedSection) {
 							sections = sections.map((s) => {
-								console.log({ section, activeSection }, `${s.id}` === `${activeSection || selectedSection}`);
+								console.log(
+									{ section, activeSection },
+									`${s.id}` === `${activeSection || selectedSection}`
+								);
 								if (`${s.id}` === `${activeSection || selectedSection}`) {
 									return {
 										...s,
@@ -587,8 +632,7 @@ function saveSection() {
 								}
 								return s;
 							});
-						}
-						else {
+						} else {
 							sections.push(section);
 						}
 						return { ...c, sections };
@@ -597,12 +641,12 @@ function saveSection() {
 			};
 		} else return book;
 	});
-	console.log({ books,  });
+	console.log({ books });
 
 	sessionStorage.setItem("books", JSON.stringify(books));
 
 	showChapterList();
-	selectedSection= 0
+	selectedSection = 0;
 	document.getElementById("sectionForm").reset();
 	addSectionModal.hide();
 }
@@ -616,12 +660,12 @@ function editChapter(id, name) {
 function editSection(id, sectionId) {
 	selectedSection = sectionId;
 	activeSection = sectionId;
-	let section = {}
-	const books = JSON.parse(sessionStorage.getItem('books'|| "[]"))
-	const book = books.find((book)=>`${book.id}` === `${selectedBook}`)
-	const chapter = book.chapters.find(chap => `${chap.id}` === `${id}` )
-	section = chapter.sections.find(sec => `${sec.id}` === `${sectionId}` )
-	console.log({selectedSection, activeSection, section})
+	let section = {};
+	const books = JSON.parse(sessionStorage.getItem("books" || "[]"));
+	const book = books.find((book) => `${book.id}` === `${selectedBook}`);
+	const chapter = book.chapters.find((chap) => `${chap.id}` === `${id}`);
+	section = chapter.sections.find((sec) => `${sec.id}` === `${sectionId}`);
+	console.log({ selectedSection, activeSection, section });
 	document.getElementById("sectionTitle").value = section.name;
 	document.getElementById("sectionContent").value = section.content;
 	addSectionModal.show();
@@ -665,8 +709,8 @@ function deleteSection(id, sec) {
 	console.log({ books });
 	sessionStorage.setItem("books", JSON.stringify(books));
 	showChapterList();
-	selectedSection = 0
-	activeSection = 0
+	selectedSection = 0;
+	activeSection = 0;
 	document.getElementById("chapterForm").reset();
 	deleteConfirmationModal.hide();
 }
