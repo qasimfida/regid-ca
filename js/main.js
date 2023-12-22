@@ -6,7 +6,7 @@ let activeSection = 0;
 let activeChapter = 0;
 let itemIdCounter = 0;
 
-const base_url = "http://localhost:8080/boiler";
+const base_url = "http://localhost:8080/books";
 
 async function fetchData(url) {
 	try {
@@ -23,7 +23,7 @@ async function postData(url, formData) {
 			method: "POST",
 			body: formData,
 		});
-	
+
 		if (response.status === 200 || response.status === 201) {
 			// Check if the response content type is JSON
 			return await response.json();
@@ -34,11 +34,7 @@ async function postData(url, formData) {
 	} catch (err) {
 		throw err;
 	}
-	
 }
-
-
-
 
 // BOOKS CRUD
 
@@ -69,7 +65,7 @@ async function saveBook() {
 	if (image?.files && image?.files?.[0]) {
 		formData.append("image", image?.files?.[0]);
 	}
-	
+
 	formData.append("book_title", document.getElementById("itemName").value);
 	formData.append("description", document.getElementById("itemDescription").value);
 	formData.append("author", document.getElementById("creditby").value);
@@ -91,7 +87,7 @@ async function saveBook() {
 		// books.push(book);
 	}
 	sessionStorage.setItem("books", JSON.stringify(books));
-	// showBookList();
+	showBookList();
 
 	// Reset the form
 	document.getElementById("modalForm").reset();
@@ -103,16 +99,19 @@ async function saveBook() {
 
 // Function to add a new item to the list
 function addBook(book) {
-	const { name, bookImage, id } = book;
+	const { book_title, image, id } = book;
 	const itemList = document.getElementById("book-list");
 	const li = document.createElement("li");
+	console.log({ a: base_url + "/" + image });
 	li.id = id;
 	li.className = "list-group-item d-flex justify-content-between align-items-center";
 	li.innerHTML = `
-		<span class="book-name d-flex w-100 justify-content-between " >
-			<span onclick="showBookDetails('${book.id}','${book.name}','${book.description}', '${book.bookImage}','${book.creditBy}')" >
-				<span> <img height="40px" width="40px" style="border-radius: 10px" src="${bookImage}"/> </span>
-				<span> ${name} </span>
+		<span class="book-name d-flex w-100 justify-content-between" >
+			<span onclick="showBookDetails('${book.id}')" >
+				<span> <img height="40px" width="40px" style="border-radius: 10px" src="${
+					base_url + "/" + image
+				}"/> </span>
+				<span> ${book_title} </span>
 			</span>
 			<div class="dropdown">
 				<button class="btn  btn-sm dropdown_btn dropdown-toggle" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
@@ -128,7 +127,9 @@ function addBook(book) {
 					</svg>
 				</button>
 				<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
-					<li><a class="dropdown-item" href="#" onclick="editBook('${book.id}','${book.name}','${book.description}', '${book.bookImage}','${book.creditBy}')">Edit</a></li>
+					<li><a class="dropdown-item" href="#" onclick="editBook('${book.id}','${book.book_title}','${
+		book.description
+	}', '${book.bookImage}','${book.creditBy}')">Edit</a></li>
 					<li><a class="dropdown-item" href="#" onclick="showDeleteConfirmation('${id}')">Delete</a></li>
 				</ul>
 			</div>
@@ -163,7 +164,7 @@ function updateBook(book, index) {
 	const li = itemList.children[index];
 
 	li.innerHTML = `
-    <span class="book-name" onclick="showBookDetails('${name}', '${description}', '${creditBy}', '${bookImage}')">${name}</span>
+    <span class="book-name" onclick="showBookDetails('${id}')">${name}</span>
     <div class="dropdown">
       <button class="btn dropdown_btn " type="button" id="bookDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 24 24">
@@ -347,7 +348,8 @@ function showBookDetails(id) {
 async function showBookList() {
 	const res = await fetchData("/books");
 	console.log({ res });
-	const books = JSON.parse(sessionStorage.getItem("books") || "[]");
+	const books = res?.data || [];
+	// const books = JSON.parse(sessionStorage.getItem("books") || "[]");
 	const list = document.getElementById("book-list");
 	list.innerHTML = "";
 	for (let book = 0; book < books.length; book++) {
