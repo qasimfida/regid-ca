@@ -6,7 +6,7 @@ let activeSection = 0;
 let activeChapter = 0;
 let itemIdCounter = 0;
 
-const base_url = "http://localhost:80/books";
+const base_url = "http://localhost:8080/boiler";
 
 async function fetchData(url) {
 	try {
@@ -17,26 +17,28 @@ async function fetchData(url) {
 	}
 }
 
-async function postData(url, body, options={}) {
-
-
-    const content = {
-        method: "POST",
-        body,
-        ...options
-    };
-    try {
-        const response = await fetch(`${base_url}${url}`, content);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (err) {
-        throw err; // Re-throwing the error makes it possible for the caller to handle it
-    }
+async function postData(url, formData) {
+	try {
+		const response = await fetch(`${base_url}${url}`, {
+			method: "POST",
+			body: formData,
+		});
+	
+		if (response.status === 200 || response.status === 201) {
+			// Check if the response content type is JSON
+			return await response.json();
+		} else {
+			// Handle other status codes
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+	} catch (err) {
+		throw err;
+	}
+	
 }
+
+
+
 
 // BOOKS CRUD
 
@@ -65,15 +67,15 @@ async function saveBook() {
 
 	const image = document.getElementById("image");
 	if (image?.files && image?.files?.[0]) {
-		formData.image = image?.files?.[0];
+		formData.append("image", image?.files?.[0]);
 	}
-
-	formData.book_title = document.getElementById("itemName").value;
-	formData.description = document.getElementById("itemDescription").value;
-	formData.author = document.getElementById("creditby").value;
+	
+	formData.append("book_title", document.getElementById("itemName").value);
+	formData.append("description", document.getElementById("itemDescription").value);
+	formData.append("author", document.getElementById("creditby").value);
 
 	if (selectedBook) {
-		const res = await postData("/books/", formData);
+		const res = await postData("/books", formData);
 		console.log(res);
 		// books = books.map((b) => {
 		// 	if (`${b.id}` === selectedBook)
@@ -84,7 +86,7 @@ async function saveBook() {
 		// 	else return { ...b };
 		// });
 	} else {
-		const res = postData("/books/", formData);
+		const res = await postData("/books", formData);
 		console.log(res);
 		// books.push(book);
 	}
@@ -92,8 +94,8 @@ async function saveBook() {
 	// showBookList();
 
 	// Reset the form
-	// document.getElementById("modalForm").reset();
-	// document.getElementById("image").value = "";
+	document.getElementById("modalForm").reset();
+	document.getElementById("image").value = "";
 	selectedBook = 0;
 
 	// modal.hide();
