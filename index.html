@@ -4,6 +4,8 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Form with Modal</title>
+		<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
+		<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 		<link
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
@@ -72,6 +74,7 @@
 				</div>
 			</div>
 		</nav>
+
 		<!-- Body-Content -->
 		<div class="container body-content">
 			<div class="row">
@@ -96,10 +99,14 @@
 							<div id="bookDetailsContent"></div>
 						</div>
 						<!-- Book Details End -->
+
+						
 					</div>
 				</div>
 
 				<div class="col-xs-12 col-md-6 pt-5">
+					<div id="content-display"></div>
+
 					<div id="content">
 						<!--Pagination-Content-->
 						<!-- <div id="introduction" class="content-section">
@@ -130,6 +137,8 @@
 					</div>
 				</div>
 				<div class="col-xs-12 col-md-3 pt-5 p-0">
+					<div id="citations-container"></div>
+
 					<!-- <div class="tab_two">
 						<ul class="nav nav-tabs" id="myTabs">
 							<li class="nav-item">
@@ -421,11 +430,39 @@
 						<div class="modal-body">
 							<form id="sectionForm" autocomplete="off" onsubmit="saveSection()">
 								<div class="mb-3">
-									<label for="sectionTitle" class="form-label">Chapter Title:</label>
+									<label for="sectionTitle" class="form-label">Section Title:</label>
 									<input type="text" class="form-control" id="sectionTitle" required />
 								</div>
 								<div class="mb-3">
 									<label for="sectionContent" class="form-label">Description:</label>
+									<div id="toolbar">
+										<!-- Add standard toolbar options here -->
+										<span class="ql-formats">
+										  <select class="ql-font"></select>
+										  <select class="ql-size"></select>
+										</span>
+										<span class="ql-formats">
+										  <button class="ql-bold"></button>
+										  <button class="ql-italic"></button>
+										  <button class="ql-underline"></button>
+										  <button class="ql-strike"></button>
+										</span>
+										<span class="ql-formats">
+										  <select class="ql-color"></select>
+										  <select class="ql-background"></select>
+										</span>
+										<!-- ... other default options ... -->
+									  
+										<!-- Add your custom option -->
+										<button class="ql-emoji">😊</button>
+										<button class="ql-citation">Cite</button>
+
+									  </div>
+										<div id="editor">
+											<p>Hello World!</p>
+											<p>Some initial <strong>bold</strong> text</p>
+											<p><br /></p>
+										</div>
 									<textarea class="form-control" id="sectionContent" rows="3" required></textarea>
 								</div>
 								<button type="submit" class="btn btn-success">Save</button>
@@ -471,6 +508,7 @@
 				</div>
 			</div>
 		</div>
+
 		<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 		<script src="./js/main.js"></script>

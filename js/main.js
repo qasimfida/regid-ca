@@ -6,33 +6,68 @@ let activeSection = 0;
 let activeChapter = 0;
 let itemIdCounter = 0;
 
+var quill = new Quill("#editor", {
+	theme: "snow",
+	modules: {
+		toolbar: ["citation"],
+	},
+});
+
 const base_url = "http://localhost:8080/books";
 
-async function fetchData(url) {
+async function makeRequest(url, method = "GET", body = null, isFormData = false) {
+	const options = { method };
+	debugger;
+	if (body) {
+		if (isFormData) {
+			// For FormData, just set the body without JSON.stringify
+			options.body = body;
+		} else {
+			options.body = JSON.stringify(body);
+			const header = {
+				"Content-Type":"application/json"
+			}
+			options["headers"] = header
+		}
+	}
+
 	try {
-		const response = await fetch(`${base_url}${url}`);
-		return response.json();
+		const response = await fetch(`${base_url}${url}`, options);
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		return await response.json();
 	} catch (err) {
-		return err;
+		console.error("HTTP request failed:", err);
+		throw err;
 	}
 }
 
-async function postData(url, formData) {
-	try {
-		const response = await fetch(`${base_url}${url}`, {
-			method: "POST",
-			body: formData,
-		});
+const APIS = {
+	fetchBooks: () => makeRequest(`/books`),
+	fetchBook: (id) => makeRequest(`/books/${id}`),
+	addNewBook: (payload) => makeRequest("/books", "POST", payload, true),
+	updateBook: (id, payload, isFormData) => makeRequest(`/books/${id}`, "PUT", payload, isFormData),
+	deleteBook: (id) => makeRequest(`/book/${id}`, "DELETE"),
+	fetchChapters: (id) => makeRequest(`/chapter/${id}`),
+};
 
-		if (response.status === 200 || response.status === 201) {
-			// Check if the response content type is JSON
-			return await response.json();
-		} else {
-			// Handle other status codes
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
+async function addNewBook(payload) {
+	try {
+		const res = await APIS.addNewBook(payload);
+		console.log("Book added:", res);
+		return res;
 	} catch (err) {
-		throw err;
+		console.error("Error adding book:", err);
+	}
+}
+async function deleteBook(id) {
+	try {
+		const res = await APIS.deleteBook(id);
+		console.log("Book deleted:", res);
+		return res;
+	} catch (err) {
+		console.error("Error deleting book:", err);
 	}
 }
 
@@ -60,41 +95,53 @@ async function saveBook() {
 	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
 
 	const formData = new FormData();
-
+	let isFormData = false;
 	const image = document.getElementById("image");
 	if (image?.files && image?.files?.[0]) {
+		isFormData = true;
 		formData.append("image", image?.files?.[0]);
+		console.log({ img: image?.files?.[0] });
 	}
 
-	formData.append("book_title", document.getElementById("itemName").value);
-	formData.append("description", document.getElementById("itemDescription").value);
-	formData.append("author", document.getElementById("creditby").value);
+	const book_title = document.getElementById("itemName").value;
+	const description = document.getElementById("itemDescription").value;
+	const author = document.getElementById("creditby").value;
 
-	if (selectedBook) {
-		const res = await postData("/books", formData);
-		console.log(res);
-		// books = books.map((b) => {
-		// 	if (`${b.id}` === selectedBook)
-		// 		return {
-		// 			...b,
-		// 			...book,
-		// 		};
-		// 	else return { ...b };
-		// });
-	} else {
-		const res = await postData("/books", formData);
-		console.log(res);
-		// books.push(book);
+	formData.append("book_title", book_title);
+	formData.append("description", description);
+	formData.append("author", author);
+
+	try {
+		let res;
+		if (selectedBook) {
+			// Update the existing book
+			res = await APIS.updateBook(
+				selectedBook,
+				isFormData ? formData : { book_title, description, author },
+				isFormData
+			);
+			console.log("Book updated:", res);
+
+			// Update the local books array with the updated book
+			// (Assuming `books` is an array of book objects stored in sessionStorage)
+		} else {
+			// Add a new book
+			res = await APIS.addNewBook(formData);
+			console.log("Book added:", res);
+
+			// Add the new book to the local books array
+			// (Assuming `books` is an array of book objects stored in sessionStorage)
+		}
+		if (res.success) {
+			showBookList();
+			document.getElementById("modalForm").reset();
+			document.getElementById("image").value = "";
+			selectedBook = 0;
+			// modal.hide();
+		}
+	} catch (err) {
+		console.error("Error saving book:", err);
 	}
-	sessionStorage.setItem("books", JSON.stringify(books));
-	showBookList();
-
-	// Reset the form
-	document.getElementById("modalForm").reset();
-	document.getElementById("image").value = "";
-	selectedBook = 0;
-
-	// modal.hide();
 }
 
 // Function to add a new item to the list
@@ -107,7 +154,7 @@ function addBook(book) {
 	li.className = "list-group-item d-flex justify-content-between align-items-center";
 	li.innerHTML = `
 		<span class="book-name d-flex w-100 justify-content-between" >
-			<span onclick="showBookDetails('${book.id}')" >
+			<span onclick="showBookDetails('${id}')" >
 				<span> <img height="40px" width="40px" style="border-radius: 10px" src="${
 					base_url + "/" + image
 				}"/> </span>
@@ -140,20 +187,28 @@ function addBook(book) {
 }
 
 // Function to edit an existing item
-function editBook(id, name, description, bookImage, creditBy) {
-	selectedBook = id;
-	document.getElementById("itemName").value = name;
-	document.getElementById("itemDescription").value = description;
-	document.getElementById("creditby").value = creditBy;
+async function editBook(id) {
+	const res = await APIS.fetchBook(id);
+	if (res.success) {
+		const { author, book_title, description, image } = res.data.book;
+		console.log({ res });
+		selectedBook = id;
+		document.getElementById("itemName").value = book_title;
+		document.getElementById("itemDescription").value = description;
+		document.getElementById("creditby").value = author;
+		// document.getElementById("image").value =  base_url + "/" + image;
 
-	let preview = document.getElementById("imagePreview");
-	let img = document.createElement("img");
-	img.setAttribute("src", bookImage);
-	img.setAttribute("alt", "Image Preview");
-	preview.innerHTML = "";
-	preview.appendChild(img);
+		let preview = document.getElementById("imagePreview");
+		let img = document.createElement("img");
+		img.setAttribute("src", base_url + "/" + image);
+		img.setAttribute("alt", "Image Preview");
+		preview.innerHTML = "";
+		preview.appendChild(img);
 
-	modal.show();
+		modal.show();
+	} else {
+		alert("Failed to fetch book");
+	}
 }
 
 // Function to update a book in the list
@@ -186,7 +241,9 @@ function updateBook(book, index) {
 }
 
 // Function to delete a book from the list
-function deleteBook(itemId) {
+async function deleteBook(bookId) {
+	const res = await APIS.deleteBook(bookId);
+	console.log({ res }, "DELETE");
 	let books = JSON.parse(sessionStorage.getItem("books") || []);
 	books = books.filter((book) => `${book.id}` !== itemId);
 	sessionStorage.setItem("books", JSON.stringify(books));
@@ -203,9 +260,6 @@ document.getElementById("modalForm").addEventListener("submit", function (e) {
 showBookList();
 
 // CHAPTERS CRUD
-
-// Initially hide the previous button
-// document.getElementById("prevButton").style.display = "none";
 
 function showPrevious() {
 	if (selectedChapter > 0) {
@@ -287,54 +341,59 @@ function showDeleteConfirmation(itemId) {
 }
 
 // Function to update book details content
-function updateBookDetails(id) {
-	selectedBook = id;
-	const bookDetailsContent = document.getElementById("bookDetailsContent");
-	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
-	const book = books.find((book) => `${book.id}` === id);
-	bookDetailsContent.innerHTML = "";
+async function updateBookDetails(id) {
+	const res = await APIS.fetchBook(id);
+	if (res.success) {
+		const { author, book_title, description, image } = res.data.book;
+		console.log({ res });
+		selectedBook = id;
+		const bookDetailsContent = document.getElementById("bookDetailsContent");
+		bookDetailsContent.innerHTML = "";
 
-	const detailsHeader = document.createElement("div");
-	detailsHeader.className = "book_detils_header position-relative d-flex justify-content-start";
+		const detailsHeader = document.createElement("div");
+		detailsHeader.className = "book_detils_header position-relative d-flex justify-content-start";
 
-	const backButton = document.createElement("button");
-	backButton.className = "btn back_button";
-	backButton.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512">
-      <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M244 400L100 256l144-144M120 256h292"/>
-    </svg>`;
-	backButton.addEventListener("click", function () {
-		selectedBook = 0;
-		showBookList();
-	});
+		const backButton = document.createElement("button");
+		backButton.className = "btn back_button";
+		backButton.innerHTML = `
+		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512">
+		  <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M244 400L100 256l144-144M120 256h292"/>
+		</svg>`;
+		backButton.addEventListener("click", function () {
+			selectedBook = 0;
+			showBookList();
+		});
 
-	const bookName = document.createElement("h3");
-	bookName.className = "book_name_value ";
-	bookName.textContent = book.name;
+		const bookName = document.createElement("h3");
+		bookName.className = "book_name_value ";
+		bookName.textContent = book_title;
 
-	detailsHeader.appendChild(backButton);
-	detailsHeader.appendChild(bookName);
+		detailsHeader.appendChild(backButton);
+		detailsHeader.appendChild(bookName);
 
-	const addChapterButton = document.createElement("button");
-	addChapterButton.className = "btn add_chapter_button";
-	addChapterButton.setAttribute("data-bs-toggle", "modal");
-	addChapterButton.setAttribute("data-bs-target", "#add-chapter");
-	addChapterButton.textContent = "Add a Chapter";
-	addChapterButton.addEventListener("click", function () {
-		document.getElementById("chapterForm").reset();
-		addChapterModal.show();
-	});
+		const addChapterButton = document.createElement("button");
+		addChapterButton.className = "btn add_chapter_button";
+		addChapterButton.setAttribute("data-bs-toggle", "modal");
+		addChapterButton.setAttribute("data-bs-target", "#add-chapter");
+		addChapterButton.textContent = "Add a Chapter";
+		addChapterButton.addEventListener("click", function () {
+			document.getElementById("chapterForm").reset();
+			addChapterModal.show();
+		});
 
-	// Create the accordion for chapters
-	const accordion = document.createElement("div");
-	accordion.className = "accordion";
-	accordion.id = "accordionExample";
+		// Create the accordion for chapters
+		const accordion = document.createElement("div");
+		accordion.className = "accordion";
+		accordion.id = "accordionExample";
 
-	// Append the created elements to the book details content
-	bookDetailsContent.appendChild(detailsHeader);
-	bookDetailsContent.appendChild(addChapterButton);
-	bookDetailsContent.appendChild(accordion);
-	showChapterList();
+		// Append the created elements to the book details content
+		bookDetailsContent.appendChild(detailsHeader);
+		bookDetailsContent.appendChild(addChapterButton);
+		bookDetailsContent.appendChild(accordion);
+		showChapterList();
+	} else {
+		alert("Failed to fetch book");
+	}
 }
 
 // Function to show book details
@@ -346,7 +405,7 @@ function showBookDetails(id) {
 
 // Function to show book list
 async function showBookList() {
-	const res = await fetchData("/books");
+	const res = await APIS.fetchBooks();
 	console.log({ res });
 	const books = res?.data || [];
 	// const books = JSON.parse(sessionStorage.getItem("books") || "[]");
@@ -404,7 +463,9 @@ function saveChapter() {
 }
 let chapterIdCounter = 0;
 
-function showChapterList() {
+async function showChapterList() {
+	const res = await APIS.fetchBook(selectedBook);
+	console.log({ res });
 	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
 	const book = books.find((book) => `${book.id}` === selectedBook);
 	const chapters = book?.chapters || [];
@@ -751,3 +812,73 @@ function sectionDeleteConfirmation(id, sec) {
 		document.getElementById("sectionForm").reset();
 	});
 }
+
+let Inline = Quill.import("blots/inline");
+
+class Citation extends Inline {
+	static create(citationId) {
+		let node = super.create();
+		node.setAttribute("class", "citation");
+		node.dataset.citationId = citationId;
+		return node;
+	}
+
+	static formats(node) {
+		return node.dataset.citationId;
+	}
+}
+Citation.blotName = "citation";
+Citation.tagName = "span";
+
+Quill.register(Citation);
+
+function addCitation() {
+	let citationText = prompt("Enter the citation:");
+	if (citationText) {
+		let range = quill.getSelection();
+		if (range && range.length > 0) {
+			let citationId = "citation-" + Date.now();
+			quill.formatText(range.index, range.length, "citation", citationId);
+
+			// Update the citation list
+			updateCitationList(citationId, citationText);
+		} else {
+			alert("Please select text to add a citation.");
+		}
+	}
+}
+
+function updateCitationList(citationId, citationText) {
+	let citationsDiv = document.getElementById("citations-container");
+	let citationElement = document.createElement("div");
+	citationElement.textContent = citationText;
+	citationElement.id = citationId;
+	citationElement.classList.add("citation-item");
+	citationElement.onclick = () => scrollToCitation(citationId);
+	citationsDiv.appendChild(citationElement);
+}
+
+function scrollToCitation(citationId) {
+	let citationElement = document.getElementById(citationId);
+	if (citationElement) {
+		citationElement.scrollIntoView({ behavior: "smooth" });
+	}
+}
+
+document.getElementById("editor").addEventListener("click", function (e) {
+	if (e.target.classList.contains("citation")) {
+		let citationId = e.target.dataset.citationId;
+		scrollToCitation(citationId);
+	}
+});
+
+document.querySelector(".ql-citation").addEventListener("click", addCitation);
+
+let contentDisplayDiv = document.getElementById("content-display");
+
+quill.on("text-change", function (delta, oldDelta, source) {
+	if (delta.ops.length === 2 && delta.ops[1].insert === "\n") {
+		// Display editor's content in the contentDisplayDiv
+		contentDisplayDiv.innerHTML = quill.root.innerHTML;
+	}
+});
