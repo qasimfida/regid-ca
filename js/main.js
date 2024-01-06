@@ -5,40 +5,113 @@ let selectedSection = 0;
 let activeSection = 0;
 let activeChapter = 0;
 let itemIdCounter = 0;
+const toolbarOptions = [
+	["bold", "italic", "underline", "strike"], // toggled buttons
+	["blockquote", "code-block"],
 
-var quill = new Quill("#editor", {
+	[{ list: "ordered" }, { list: "bullet" }],
+	[{ script: "sub" }, { script: "super" }], // superscript/subscript
+	[{ indent: "-1" }, { indent: "+1" }], // outdent/indent
+	[{ direction: "rtl" }], // text direction
+
+	[{ header: [1, 2, 3, 4, 5, 6, false] }],
+
+	[{ color: [] }, { background: [] }], // dropdown with defaults from theme
+	[{ font: [] }],
+	[{ align: [] }],
+
+	["clean"], // remove formatting button
+	["link", "image", "citation"], // link and image citation
+	// ['link', 'image', 'video'],                       // link and image, video
+
+	// Here is your custom 'citation' button
+	// ['citation']
+];
+
+const notifications = document.querySelector(".notifications");
+
+const removeToast = (toast) => {
+	toast.classList.add("hide");
+	if (toast.timeoutId) clearTimeout(toast.timeoutId);
+	setTimeout(() => toast.remove(), 500);
+};
+
+const createToast = (error) => {
+	const { message, type, status } = error;
+	const toast = document.createElement("li");
+	toast.className = `toast ${type}`;
+	toast.innerHTML = `<div class="column">
+                         <span><b>${status}</b></span>
+                         <span>${message}</span>
+                      </div>
+					  <button
+						type="button"
+						class="btn-close"
+						aria-label="Close" onclick="removeToast(this.parentElement)" >
+					  </button>`;
+	notifications.appendChild(toast);
+	toast.timeoutId = setTimeout(() => removeToast(toast), 5000);
+};
+
+let quill = new Quill("#editor", {
 	theme: "snow",
 	modules: {
-		toolbar: ["citation"],
+		toolbar: {
+			handlers: {
+				image: imageHandler,
+			},
+			container: toolbarOptions,
+		},
 	},
 });
+function imageHandler() {
+	const range = this.quill.getSelection();
+	const input = document.createElement("input");
+	input.setAttribute("type", "file");
+	input.setAttribute("accept", "image/*");
+	input.click();
+
+	input.onchange = () => {
+		const file = input.files[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				const imgSrc = e.target.result;
+				const figureLabel = prompt("Enter a figure label:");
+
+				if (figureLabel) {
+					this.quill.insertEmbed(range.index, "image", imgSrc);
+					this.quill.insertText(range.index + 1, `\n${figureLabel}\n`, { italic: true });
+				} else {
+					// Optionally alert the user
+					createToast({
+						type: "error",
+						message: "You must enter a figure label to insert an image.",
+						status: "Failed",
+					});
+				}
+			};
+			reader.readAsDataURL(file);
+		}
+	};
+}
 
 const base_url = "http://localhost:8080/books";
 
-async function makeRequest(url, method = "GET", body = null, isFormData = false) {
+async function makeRequest(url, method = "GET", body = null) {
 	const options = { method };
-	debugger;
 	if (body) {
-		if (isFormData) {
-			// For FormData, just set the body without JSON.stringify
-			options.body = body;
-		} else {
-			options.body = JSON.stringify(body);
-			const header = {
-				"Content-Type":"application/json"
-			}
-			options["headers"] = header
-		}
+		options.body = JSON.stringify(body);
 	}
 
 	try {
 		const response = await fetch(`${base_url}${url}`, options);
-		if (!response.ok) {
+		if (!response?.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		return await response.json();
 	} catch (err) {
-		console.error("HTTP request failed:", err);
+		console.log("HTTP request failed:", err?.data);
 		throw err;
 	}
 }
@@ -47,29 +120,12 @@ const APIS = {
 	fetchBooks: () => makeRequest(`/books`),
 	fetchBook: (id) => makeRequest(`/books/${id}`),
 	addNewBook: (payload) => makeRequest("/books", "POST", payload, true),
-	updateBook: (id, payload, isFormData) => makeRequest(`/books/${id}`, "PUT", payload, isFormData),
+	addChapter: (id, payload) => makeRequest(`/chapter/${id}`, "POST", payload),
+	updateBook: (id, payload) => makeRequest(`/books/${id}`, "PUT", payload),
 	deleteBook: (id) => makeRequest(`/book/${id}`, "DELETE"),
 	fetchChapters: (id) => makeRequest(`/chapter/${id}`),
+	updateChapter: (id, payload) => makeRequest(`/chapter/${id}`, "PUT", payload),
 };
-
-async function addNewBook(payload) {
-	try {
-		const res = await APIS.addNewBook(payload);
-		console.log("Book added:", res);
-		return res;
-	} catch (err) {
-		console.error("Error adding book:", err);
-	}
-}
-async function deleteBook(id) {
-	try {
-		const res = await APIS.deleteBook(id);
-		console.log("Book deleted:", res);
-		return res;
-	} catch (err) {
-		console.error("Error deleting book:", err);
-	}
-}
 
 // BOOKS CRUD
 
@@ -92,97 +148,66 @@ modal._element.addEventListener("hidden.bs.modal", function () {
 
 // Function to add or update an item in the list
 async function saveBook() {
-	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
-
-	const formData = new FormData();
-	let isFormData = false;
-	const image = document.getElementById("image");
-	if (image?.files && image?.files?.[0]) {
-		isFormData = true;
-		formData.append("image", image?.files?.[0]);
-		console.log({ img: image?.files?.[0] });
-	}
-
 	const book_title = document.getElementById("itemName").value;
 	const description = document.getElementById("itemDescription").value;
 	const author = document.getElementById("creditby").value;
+debugger
+	function convertImageToBase64(file, callback) {
+		const reader = new FileReader();
+		reader.onload = function (event) {
+			callback(event.target.result); // This is the base64 string
+		};
+		reader.readAsDataURL(file);
+	}
 
-	formData.append("book_title", book_title);
-	formData.append("description", description);
-	formData.append("author", author);
+	const payload = { book_title, description, author };
+	const image = document.getElementById("image");
 
+	if (image?.files && image?.files[0]) {
+		convertImageToBase64(image.files[0], function (base64String) {
+			payload["image"] = base64String;
+		});
+	}
 	try {
 		let res;
 		if (selectedBook) {
-			// Update the existing book
-			res = await APIS.updateBook(
-				selectedBook,
-				isFormData ? formData : { book_title, description, author },
-				isFormData
-			);
-			console.log("Book updated:", res);
-
-			// Update the local books array with the updated book
-			// (Assuming `books` is an array of book objects stored in sessionStorage)
+			res = await APIS.updateBook(selectedBook, payload);
 		} else {
-			// Add a new book
-			res = await APIS.addNewBook(formData);
-			console.log("Book added:", res);
-
-			// Add the new book to the local books array
-			// (Assuming `books` is an array of book objects stored in sessionStorage)
+			res = await APIS.addNewBook(payload);
 		}
 		if (res.success) {
+			createToast({
+				type: "success",
+				status: "Successful",
+				message: `${book_title} ${!selectedBook ? "added" : "updated"} successfully`,
+			});
 			showBookList();
 			document.getElementById("modalForm").reset();
 			document.getElementById("image").value = "";
 			selectedBook = 0;
-			// modal.hide();
+			modal.hide();
+		} else {
+			createToast({ type: "error", status: "Error", message: res.error });
 		}
 	} catch (err) {
-		console.error("Error saving book:", err);
+		console.log("Error saving book:", {err});
+		createToast({
+			type: "error",
+			status: "Error",
+			message: `Something went wrong`,
+		});
+
 	}
 }
 
-// Function to add a new item to the list
+// Function to add a Book to the list
 function addBook(book) {
-	const { book_title, image, id } = book;
+	const { id } = book;
 	const itemList = document.getElementById("book-list");
 	const li = document.createElement("li");
-	console.log({ a: base_url + "/" + image });
 	li.id = id;
 	li.className = "list-group-item d-flex justify-content-between align-items-center";
-	li.innerHTML = `
-		<span class="book-name d-flex w-100 justify-content-between" >
-			<span onclick="showBookDetails('${id}')" >
-				<span> <img height="40px" width="40px" style="border-radius: 10px" src="${
-					base_url + "/" + image
-				}"/> </span>
-				<span> ${book_title} </span>
-			</span>
-			<div class="dropdown">
-				<button class="btn  btn-sm dropdown_btn dropdown-toggle" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-					<svg width="20" height="20" viewBox="0 0 24 24">
-						<path
-							fill="none"
-							stroke="currentColor"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
-						/>
-					</svg>
-				</button>
-				<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
-					<li><a class="dropdown-item" href="#" onclick="editBook('${book.id}','${book.book_title}','${
-		book.description
-	}', '${book.bookImage}','${book.creditBy}')">Edit</a></li>
-					<li><a class="dropdown-item" href="#" onclick="showDeleteConfirmation('${id}')">Delete</a></li>
-				</ul>
-			</div>
-		</span>
-	`;
-
+	li.innerHTML = renderAddBook(book);
 	itemList.appendChild(li);
 }
 
@@ -191,7 +216,6 @@ async function editBook(id) {
 	const res = await APIS.fetchBook(id);
 	if (res.success) {
 		const { author, book_title, description, image } = res.data.book;
-		console.log({ res });
 		selectedBook = id;
 		document.getElementById("itemName").value = book_title;
 		document.getElementById("itemDescription").value = description;
@@ -211,44 +235,18 @@ async function editBook(id) {
 	}
 }
 
-// Function to update a book in the list
-function updateBook(book, index) {
-	const { id, name, description, creditBy, bookImage } = book;
-
-	const itemList = document.querySelector(`#book-list #${index}`);
-	const li = itemList.children[index];
-
-	li.innerHTML = `
-    <span class="book-name" onclick="showBookDetails('${id}')">${name}</span>
-    <div class="dropdown">
-      <button class="btn dropdown_btn " type="button" id="bookDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-      <svg width="20" height="20" viewBox="0 0 24 24">
-          <path
-            fill="none"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
-          />
-      </svg>
-      </button>
-      <ul class="dropdown-menu" aria-labelledby="bookDropdownMenuButton">
-        <li><a class="dropdown-item" href="#" onclick="editBook(${book})">Edit</a></li>
-        <li><a class="dropdown-item" href="#" onclick="showDeleteConfirmation('${index}')">Delete</a></li>
-      </ul>
-    </div>`;
-}
-
 // Function to delete a book from the list
 async function deleteBook(bookId) {
-	const res = await APIS.deleteBook(bookId);
-	console.log({ res }, "DELETE");
-	let books = JSON.parse(sessionStorage.getItem("books") || []);
-	books = books.filter((book) => `${book.id}` !== itemId);
-	sessionStorage.setItem("books", JSON.stringify(books));
-	deleteConfirmationModal.hide();
-	showBookList();
+	try {
+		const res = await APIS.deleteBook(bookId);
+		if (res.success) {
+			deleteConfirmationModal.hide();
+			showBookList();
+		}
+		console.log({ res }, "DELETE");
+	} catch (err) {
+		console.log({ err }, "DELETE Err");
+	}
 }
 
 // Event listener for form submission
@@ -343,6 +341,7 @@ function showDeleteConfirmation(itemId) {
 // Function to update book details content
 async function updateBookDetails(id) {
 	const res = await APIS.fetchBook(id);
+	console.log({ res }, "Asdf");
 	if (res.success) {
 		const { author, book_title, description, image } = res.data.book;
 		console.log({ res });
@@ -419,66 +418,66 @@ async function showBookList() {
 }
 
 // Function to add a new chapter
-function saveChapter() {
-	const name = document.getElementById("chapterTitle").value.trim();
+async function saveChapter() {
+	const chapter_name = document.getElementById("chapterTitle").value.trim();
 
 	// Check if the chapterTitle is empty
-	if (!name) {
+	if (!chapter_name) {
 		return;
 	}
 
 	const chapter = {
-		id: selectedChapter || Math.floor(Math.random() * 1234567890),
-		name,
-		sections: [],
+		chapter_name,
 	};
-	debugger;
-	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
-	books = books.map((book) => {
-		if (`${book.id}` === selectedBook) {
-			let chapters = book.chapters || [];
-			if (
-				selectedChapter
-					? (chapters = chapters.map((c) => {
-							console.log({ c, selectedChapter }, `${c.id}` === selectedChapter);
-							if (`${c.id}` === selectedChapter) {
-								return { ...c, ...chapter };
-							} else return { ...c };
-					  }))
-					: chapters.push(chapter)
-			)
-				return {
-					...book,
-					chapters,
-				};
-		} else return book;
-	});
+	try {
+		debugger;
+		let res;
+		if (selectedChapter) {
+			res = await APIS.updateChapter(selectedBook, chapter);
+		} else {
+			res = await APIS.addChapter(selectedBook, chapter);
+		}
+		if (res.success) {
+			createToast({
+				type: "success",
+				status: "Successful",
+				message: `${chapter_name} ${!selectedChapter ? "added" : "updated"}  successfully `,
+			});
+			showChapterList();
+			selectedChapter = 0;
+			document.getElementById("chapterForm").reset();
+			addChapterModal.hide();
+		} else {
+			createToast({ type: "error", status: "Failed", message: res.error });
+		}
+	} catch (err) {
+		console.log({ err });
+		debugger;
 
-	sessionStorage.setItem("books", JSON.stringify(books));
-
-	showChapterList();
-	selectedChapter = 0;
-	document.getElementById("chapterForm").reset();
-	addChapterModal.hide();
+		createToast({ type: "error", status: "Failed", message: "Something went wrong" });
+	}
 }
 let chapterIdCounter = 0;
 
 async function showChapterList() {
 	const res = await APIS.fetchBook(selectedBook);
-	console.log({ res });
-	let books = JSON.parse(sessionStorage.getItem("books") || "[]");
-	const book = books.find((book) => `${book.id}` === selectedBook);
-	const chapters = book?.chapters || [];
-	// Add the chapter to the list
-	const accordion = document.getElementById("accordionExample");
-	accordion.innerHTML = "";
-	for (let i = 0; i < chapters.length; i++) {
-		if (i === 0 && !activeChapter) {
-			activeChapter = chapters[i].id;
+	if (res.success) {
+		const book = res.data.book;
+		const chapters = res.data?.chapters || [];
+		const accordion = document.getElementById("accordionExample");
+		accordion.innerHTML = "";
+		for (let i = 0; i < chapters.length; i++) {
+			if (i === 0 && !activeChapter) {
+				activeChapter = chapters[i].id;
+			}
+			addChapterToList(chapters[i], chapters);
 		}
-		addChapterToList(chapters[i], chapters);
+		document.getElementById("bookTitle").innerHTML = book.name;
+	} else {
+		console.log({ res }, "Error fetching ");
 	}
-	document.getElementById("bookTitle").innerHTML = book.name;
+
+	// Add the chapter to the list
 }
 function handleChapterClick(id) {
 	activeChapter = id;
@@ -498,7 +497,7 @@ function handleSectionClick(id) {
 
 // Function to add a new chapter to the accordion
 function addChapterToList(chapter, chapters) {
-	const { name, id, sections } = chapter;
+	const { chapter_name, id, sections } = chapter;
 	const accordion = document.getElementById("accordionExample");
 	const chapterId = "chapter_" + id;
 
@@ -517,7 +516,7 @@ function addChapterToList(chapter, chapters) {
 					stroke-linecap="round" 
 					stroke-linejoin="round" 
 					class="feather feather-chevron-down mr-3"><polyline points="6 9 12 15 18 9"></polyline></svg>
-				${name}
+				${chapter_name}
 			</button>
 			<button class="btn-lg accordion-button w-auto" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
 				<svg width="20" height="20" viewBox="0 0 24 24">
@@ -532,7 +531,7 @@ function addChapterToList(chapter, chapters) {
 				</svg>
 			</button>
 			<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
-				<li><a class="dropdown-item" onClick="editChapter('${id}','${name}')" href="#" >Edit</a></li>
+				<li><a class="dropdown-item" onClick="editChapter('${id}','${chapter_name}')" href="#" >Edit</a></li>
 				<li><a class="dropdown-item" href="#" onClick="chapterDeleteConfirmation('${id}')"  >Delete</a></li>
 			</ul>
 		</div>
@@ -550,7 +549,7 @@ function addChapterToList(chapter, chapters) {
 				</button>
 				${
 					sections.length
-						? sections.map((section) => renderSection(section, id, name)).join("")
+						? sections.map((section) => renderSection(section, id, chapter_name)).join("")
 						: "No Content"
 				}
 			</div>
@@ -882,3 +881,32 @@ quill.on("text-change", function (delta, oldDelta, source) {
 		contentDisplayDiv.innerHTML = quill.root.innerHTML;
 	}
 });
+
+const renderAddBook = ({ id, image, book_title }) => `
+<span class="book-name d-flex w-100 justify-content-between" >
+	<span onclick="showBookDetails('${id}')" >
+		<span> <img height="40px" width="40px" style="border-radius: 10px" src="${
+			base_url + "/" + image
+		}"/> </span>
+		<span> ${book_title} </span>
+	</span>
+	<div class="dropdown">
+		<button class="btn  btn-sm dropdown_btn dropdown-toggle" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+			<svg width="20" height="20" viewBox="0 0 24 24">
+				<path
+					fill="none"
+					stroke="currentColor"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
+				/>
+			</svg>
+		</button>
+		<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
+			<li><a class="dropdown-item" href="#" onclick="editBook('${id}')">Edit</a></li>
+			<li><a class="dropdown-item" href="#" onclick="showDeleteConfirmation('${id}')">Delete</a></li>
+		</ul>
+	</div>
+</span>
+`;
