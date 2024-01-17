@@ -5,8 +5,39 @@ let selectedSection = 0;
 let activeSection = 0;
 let activeChapter = 0;
 let itemIdCounter = 0;
-const base_url = "http://localhost:8080/books";
+
+const Inline = Quill.import("blots/inline");
+const BlockEmbed = Quill.import("blots/block/embed");
 const rightbar = document.getElementById("rightbar");
+
+const base_url = "http://localhost:8080/books";
+const APIS = {
+	fetchBooks: () => makeRequest(`/books`),
+	fetchBook: (id) => makeRequest(`/books/${id}`),
+	addNewBook: (payload) => makeRequest("/books", "POST", payload, true),
+	addChapter: (id, payload) => makeRequest(`/chapter/${id}`, "POST", payload),
+	updateBook: (id, payload) => makeRequest(`/books/${id}`, "PUT", payload, false),
+	deleteBook: (id) => makeRequest(`/book/${id}`, "DELETE"),
+	fetchChapters: (id) => makeRequest(`/chapter/${id}`),
+	updateChapter: (id, payload) => makeRequest(`/chapter/${id}`, "PUT", payload),
+	addCitation: (payload) => makeRequest(`/citation/${payload.book_id}`, "POST", payload),
+	getCitations: (id) => makeRequest(`/citations/${id}`),
+	addFigure: (payload) => makeRequest(`/figure/${payload.book_id}`, "POST", payload),
+	getFigures: (id) => makeRequest(`/figures/${id}`),
+	addSection: (book_id, chapter_id, payload) =>
+		makeRequest(`/book/${book_id}/chapter/${chapter_id}`, "POST", payload),
+	getChapter: (book_id, chapter_id) => makeRequest(`/sections/${book_id}`),
+	getSection: (id) => makeRequest(`/section/${id}`),
+	updateSection: (id, payload) => makeRequest(`/section/${id}`, "PUT", payload),
+	deleteSection: (id) => makeRequest(`/section/${id}`, "DELETE"),
+	deleteChapter: (id) => makeRequest(`/chapter/${id}`, "DELETE"),
+	getCitation: (id) => makeRequest(`/citation/${id}`),
+	getFigure: (id) => makeRequest(`/figure/${id}`),
+	updateFigure: (payload) => makeRequest(`/figure/${payload.figure_id}`, "PUT", payload),
+	deleteFigure: (id) => makeRequest(`/figure/${id}`, "DELETE"),
+	deleteCitation: (id) => makeRequest(`/citation/${id}`, "DELETE"),
+	
+};
 
 const toolbarOptions = [
 	["bold", "italic", "underline", "strike"],
@@ -51,6 +82,181 @@ const createToast = (error) => {
 	toast.timeoutId = setTimeout(() => removeToast(toast), 5000);
 };
 
+const generateId = (key) => {
+	const date = new Date().getTime();
+	return `${key || "id"}-${date}-${Math.floor(Math.random() * 100000)}`;
+};
+class CitationBlot extends Inline {
+	static create(id) {
+		let node = super.create();
+		node.setAttribute("class", "citation-link");
+		node.setAttribute("id", id);
+		node.setAttribute("data-citation", id);
+		console.log({ id, node }, "node");
+		return node;
+	}
+
+	static formats(node) {
+		return node.getAttribute("data-citation");
+	}
+}
+
+CitationBlot.blotName = "citation";
+CitationBlot.tagName = "span";
+
+class FigureBlot extends BlockEmbed {
+	static create(value) {
+		let node = super.create();
+		node.setAttribute("id", value.id);
+
+		const img = document.createElement("img");
+		img.setAttribute("src", value.src);
+		node.appendChild(img);
+
+		const caption = document.createElement("figcaption");
+		caption.textContent = value.caption;
+		caption.setAttribute("data-figure", value.id);
+		caption.setAttribute("class", "figure-caption");
+		node.appendChild(caption);
+
+		return node;
+	}
+
+	static value(node) {
+		return {
+			id: node.getAttribute("id"),
+			src: node.firstChild.getAttribute("src"),
+			caption: node.lastChild.textContent,
+		};
+	}
+}
+
+FigureBlot.blotName = "figure";
+FigureBlot.tagName = "figure";
+
+class FigureTooltip extends Quill.import("ui/tooltip") {
+	constructor(quill, boundsContainer) {
+		super(quill, boundsContainer);
+		this.root.classList.add("ql-figure-tooltip");
+		this.setupTooltip();
+		this.bindEventListeners();
+	}
+
+	setupTooltip() {
+		this.root.innerHTML = `
+            <input class="figure-input" type="text" placeholder="Enter Figure">
+            <button class="save-btn" type="button">Save</button>
+            <button class="cancel-btn" type="button">Cancel</button>
+        `;
+	}
+
+	bindEventListeners() {
+		this.textbox = this.root.querySelector(".figure-input");
+		this.saveBtn = this.root.querySelector(".save-btn");
+		this.cancelBtn = this.root.querySelector(".cancel-btn");
+
+		this.saveBtn.addEventListener("click", this.save.bind(this));
+		this.cancelBtn.addEventListener("click", this.hide.bind(this));
+	}
+
+	async show(figure, bounds) {
+		console.log({ figure });
+
+		this.figure = figure || {};
+		if (figure.figure_id) {
+			this.root.querySelector(".save-btn").textContent = "Update";
+		}
+		this.textbox.value = figure.figure_name || "";
+		super.show();
+		this.positionTooltip(bounds);
+	}
+
+	positionTooltip(bounds) {
+		if (bounds) {
+			this.root.style.left = `${bounds.left + window.pageXOffset}px`;
+			this.root.style.top = `${bounds.top}px`;
+		}
+	}
+
+	async save(e) {
+		debugger;
+		e.preventDefault();
+		const value = this.textbox.value;
+
+		if (!value) {
+			return this.showEmptyValueError();
+		}
+		const figure = this.figure;
+		console.log({ figure });
+		try {
+			let figure_id = figure.figure_id || generateId("figure");
+			let res = await APIS.addFigure({
+				figure_id,
+				figure_name: value,
+				book_id: selectedBook,
+				figure_image: figure?.figure_image,
+			});
+			if (res.success) {
+				this.updateQuillEditor(figure_id);
+				this.showSuccessToast();
+				this.hide();
+			} else {
+				this.showFailureToast(res.error);
+			}
+		} catch (err) {
+			console.log(err);
+			this.handleSaveError();
+		}
+	}
+
+	updateQuillEditor(figure_id) {
+		const range = this.quill.getSelection(true);
+		const figure = this.figure;
+		const value = this.textbox.value;
+
+		this.quill.insertEmbed(range.index, "figure", {
+			id: figure_id,
+			src: figure.figure_image,
+			caption: value,
+		});
+	}
+
+	async hide() {
+		super.hide();
+	}
+
+	showSuccessToast() {
+		createToast({
+			type: "success",
+			status: "Successful",
+			message: "Figure added successfully",
+		});
+	}
+
+	showFailureToast(error) {
+		createToast({
+			type: "error",
+			status: "Failed!",
+			message: error,
+		});
+	}
+
+	showEmptyValueError() {
+		createToast({
+			type: "error",
+			message: "You must enter a figure label to insert an image.",
+			status: "Failed",
+		});
+	}
+
+	handleSaveError() {
+		createToast({
+			type: "error",
+			status: "Error!",
+			message: "Something went wrong",
+		});
+	}
+}
 class CitationTooltip extends Quill.import("ui/tooltip") {
 	constructor(quill, boundsContainer) {
 		super(quill, boundsContainer);
@@ -58,13 +264,11 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 		// Set a class for styling the tooltip
 		this.root.classList.add("ql-citation-tooltip");
 
-		// Add HTML structure for the tooltip
-		const tooltipInnerHtml = `
-				<input class="citation-input" type="text" placeholder="Enter citation">
-				<button class="save-btn">Save</button>
-				<button class="cancel-btn">Cancel</button>
-			`;
-		this.root.innerHTML = tooltipInnerHtml;
+		this.root.innerHTML = `
+			<input class="citation-input" type="text" placeholder="Enter citation">
+			<button class="save-btn" type="button">Save</button>
+			<button class="cancel-btn" type="button">Cancel</button>
+		`;
 
 		// Save references to elements
 		this.textbox = this.root.querySelector(".citation-input");
@@ -73,89 +277,80 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 
 		// Bind event listeners
 		this.saveBtn.addEventListener("click", (e) => this.save(e));
-		this.cancelBtn.addEventListener("click", (e) => this.hide());
+		this.cancelBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			this.hide(e);
+		});
 	}
 
-	show(value = "", bounds) {
-		// Position and initialize the tooltip
-		this.textbox.value = value;
-		super.show(); // Use the built-in show method for positioning
-		console.log({ bounds, root: this.root });
-		// Custom positioning logic if necessary
+	show(value, bounds) {
+		this.textbox.value = value || "";
+		super.show();
+
 		if (bounds) {
-			// this.root.style.display = `block`;
-			this.root.style.left = `${bounds.left}px`;
-			this.root.style.top = `${60}px`; // Example positioning
+			const containerBounds = this.quill.container.getBoundingClientRect();
+
+			this.root.style.left = `${bounds.left + window.pageXOffset - containerBounds.left}px`;
+			this.root.style.top = `${60}px`;
 		}
 
-		this.textbox.select();
+		this.quill.focus();
 	}
 
 	hide() {
 		super.hide();
 	}
 
-	save(e) {
+	async save(e) {
 		e.preventDefault();
-		// Logic to save the citation
-		const value = this.textbox.value;
-		console.log("Saving citation:", value);
-		// Implement saving logic here
-		this.hide();
+
+		const citation_name = this.textbox.value;
+		let range = this.quill.getSelection(true);
+		let citation_id = generateId("citation");
+		try {
+			const res = await APIS.addCitation({ citation_id, citation_name, book_id: selectedBook });
+			if (res.success) {
+				this.quill.formatText(
+					range.index,
+					range.length,
+					"citation",
+					citation_id,
+					Quill.sources.USER
+				);
+				this.hide();
+				createToast({
+					type: "success",
+					status: "Successful",
+					message: "Citation added successfully",
+				});
+			} else {
+				createToast({ type: "error", status: "Failed!", message: res.error });
+			}
+		} catch (err) {
+			createToast({ type: "error", status: "Error!", message: "Something went wrong" });
+		}
 	}
 }
-Quill.register("modules/citationTooltip", CitationTooltip);
 
-const citationHanlder = (value) => {
+Quill.register({
+	"modules/figureTooltip": FigureTooltip,
+	"modules/citationTooltip": CitationTooltip,
+	"formats/figure": FigureBlot,
+	"formats/citation": CitationBlot,
+});
+
+const citationHandler = (value) => {
 	let range = quill.getSelection();
+	console.log({ range });
 	if (range && range.length > 0) {
-		console.log({ value });
-		// Logic to show the custom citation tooltip
-		// Determine the bounds for positioning
-		const bounds = this.quill.getBounds(this.quill.getSelection());
-		const citationTooltip = this.quill.getModule("citationTooltip");
-		citationTooltip.show("", bounds);
-	} else {
-		// Hide the tooltip or perform other actions when the button is toggled off
+		const value = quill.getText(range.index, range.length);
+		const bounds = quill.getBounds(range);
+		const citationTooltip = quill.getModule("citationTooltip");
+		citationTooltip.show(value, bounds);
 	}
 };
-let quill = new Quill("#editor", {
-	theme: "snow",
-	modules: {
-		toolbar: {
-			handlers: {
-				image: imageHandler,
-				citation: citationHanlder,
-			},
-			container: toolbarOptions,
-		},
-		citationTooltip: true,
-	},
-});
 
-quill.root.addEventListener("click", function (event) {
-	if (event.target.tagName === "SPAN" && event.target.classList.contains("ql-citation")) {
-		// Get citation data
-		const citationValue = event.target.getAttribute("data-citation");
-
-		// Calculate bounds for positioning the tooltip
-		const bounds = event.target.getBoundingClientRect();
-
-		// Show the citation tooltip for editing
-		const citationTooltip = quill.getModule("citationTooltip");
-		citationTooltip.show(citationValue, bounds);
-	}
-});
-const toolbar = quill.getModule("toolbar");
-if (toolbar) {
-	const citationButton = toolbar.container.querySelector(".ql-citation");
-	if (citationButton) {
-		citationButton.textContent = "Cite";
-	}
-}
-
-async function imageHandler() {
-	const range = this.quill.getSelection();
+const imageHandler = async () => {
 	const input = document.createElement("input");
 	input.setAttribute("type", "file");
 	input.setAttribute("accept", "image/*");
@@ -166,47 +361,36 @@ async function imageHandler() {
 		if (file) {
 			const reader = new FileReader();
 			reader.onload = async (e) => {
-				const imgSrc = e.target.result;
-				const figureLabel = prompt("Enter a figure label:");
-				const figureId = "figure-" + Date.now(); // Generate a unique ID
-
-				if (figureLabel) {
-					try {
-						const res = await APIS.addFigure({
-							figure_id: figureId,
-							figure_name: figureLabel,
-							book_id: selectedBook,
-							figure_image: imgSrc,
-						});
-						if (res.success) {
-							this.quill.insertEmbed(range.index, "figure", {
-								id: figureId,
-								src: imgSrc,
-								caption: figureLabel,
-							});
-							createToast({
-								type: "success",
-								status: "Successful",
-								message: "Figure added successfully",
-							});
-						} else {
-							createToast({ type: "error", status: "Failed!", message: res.error });
-						}
-					} catch (err) {
-						createToast({ type: "error", status: "Error!", message: "Something went wrong" });
-					}
-				} else {
-					// Optionally alert the user
-					createToast({
-						type: "error",
-						message: "You must enter a figure label to insert an image.",
-						status: "Failed",
-					});
-				}
+				const figure_image = e.target.result;
+				const figureTooltip = quill.getModule("figureTooltip");
+				figureTooltip.show({ figure_image });
 			};
 			reader.readAsDataURL(file);
 		}
 	};
+};
+
+let quill = new Quill("#editor", {
+	theme: "snow",
+	modules: {
+		toolbar: {
+			handlers: {
+				image: imageHandler,
+				citation: citationHandler,
+			},
+			container: toolbarOptions,
+		},
+		citationTooltip: true,
+		figureTooltip: true,
+	},
+});
+
+const toolbar = quill.getModule("toolbar");
+if (toolbar) {
+	const citationButton = toolbar.container.querySelector(".ql-citation");
+	if (citationButton) {
+		citationButton.textContent = "Cite";
+	}
 }
 
 async function makeRequest(url, method = "GET", body = null, isFormData) {
@@ -231,28 +415,6 @@ async function makeRequest(url, method = "GET", body = null, isFormData) {
 	}
 }
 
-const APIS = {
-	fetchBooks: () => makeRequest(`/books`),
-	fetchBook: (id) => makeRequest(`/books/${id}`),
-	addNewBook: (payload) => makeRequest("/books", "POST", payload, true),
-	addChapter: (id, payload) => makeRequest(`/chapter/${id}`, "POST", payload),
-	updateBook: (id, payload) => makeRequest(`/books/${id}`, "PUT", payload, true),
-	deleteBook: (id) => makeRequest(`/book/${id}`, "DELETE"),
-	fetchChapters: (id) => makeRequest(`/chapter/${id}`),
-	updateChapter: (id, payload) => makeRequest(`/chapter/${id}`, "PUT", payload),
-	addCitation: (payload) => makeRequest(`/citation/${payload.book_id}`, "POST", payload),
-	getCitations: (id) => makeRequest(`/citation/${id}`),
-	addFigure: (payload) => makeRequest(`/figure/${payload.book_id}`, "POST", payload),
-	getFigures: (id) => makeRequest(`/figures/${id}`),
-	addSection: (book_id, chapter_id, payload) =>
-		makeRequest(`/book/${book_id}/chapter/${chapter_id}`, "POST", payload),
-	getChapter: (book_id, chapter_id) => makeRequest(`/sections/${book_id}`),
-	getSection: (id) => makeRequest(`/section/${id}`),
-	updateSection: (id, payload) => makeRequest(`/section/${id}`, "PUT", payload),
-	deleteSection: (id) => makeRequest(`/section/${id}`, "DELETE"),
-	deleteChapter: (id) => makeRequest(`/chapter/${id}`, "DELETE"),
-};
-
 // BOOKS CRUD
 
 const modal = new bootstrap.Modal(document.getElementById("addBookModal"));
@@ -272,11 +434,11 @@ modal._element.addEventListener("hidden.bs.modal", function () {
 	selectedBook = 0;
 });
 
-async function updateBook(formData){
+async function updateBook(formData, payload) {
 	try {
 		let res;
 		if (selectedBook) {
-			res = await APIS.updateBook(selectedBook, formData);
+			res = await APIS.updateBook(selectedBook, payload, false);
 		} else {
 			res = await APIS.addNewBook(formData);
 		}
@@ -310,6 +472,7 @@ async function saveBook() {
 	const description = document.getElementById("itemDescription").value;
 	const author = document.getElementById("creditby").value;
 	const imageInput = document.getElementById("image");
+	const payload = { book_title, author, description };
 	const formData = new FormData();
 	formData.append("book_title", book_title);
 	formData.append("description", description);
@@ -329,15 +492,14 @@ async function saveBook() {
 			.then(async (base64String) => {
 				formData.append("image", base64String);
 
-				await updateBook(formData)
+				await updateBook(formData, { ...payload, image: base64String });
 			})
 			.catch((error) => {
 				console.error("Error in file reading:", error);
 			});
 	} else {
-		await updateBook(formData)
+		await updateBook(formData, { ...payload });
 	}
-	
 }
 
 // Function to add a Book to the list
@@ -381,11 +543,25 @@ async function deleteBook(bookId) {
 		const res = await APIS.deleteBook(bookId);
 		if (res.success) {
 			deleteConfirmationModal.hide();
+			createToast({
+				type: "success",
+				status: "Successful",
+				message: `Book deleted successfully`,
+			});
 			showBookList();
+		} else {
+			createToast({
+				type: "error",
+				status: "Failed",
+				message: `Deleting book unsuccessfull`,
+			});
 		}
-		console.log({ res }, "DELETE");
 	} catch (err) {
-		console.log({ err }, "DELETE Err");
+		createToast({
+			type: "error",
+			status: "Failed",
+			message: `Something went wrong`,
+		});
 	}
 }
 
@@ -460,10 +636,6 @@ function uploadImage() {
 	}
 }
 
-// add book functionality
-
-// Clear modal content when hidden
-
 const deleteConfirmationModal = new bootstrap.Modal(
 	document.getElementById("deleteConfirmationModal")
 );
@@ -481,7 +653,6 @@ function showDeleteConfirmation(itemId) {
 // Function to update book details content
 async function updateBookDetails(id) {
 	const res = await APIS.fetchBook(id);
-	console.log({ res }, "Asdf");
 	if (res.success) {
 		const { author, book_title, description, image } = res.data.book;
 		console.log({ res });
@@ -498,17 +669,22 @@ async function updateBookDetails(id) {
 		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512">
 		  <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M244 400L100 256l144-144M120 256h292"/>
 		</svg>`;
-		backButton.addEventListener("click", function () {
-			selectedBook = 0;
-			showBookList();
-		});
-
 		const bookName = document.createElement("h3");
 		bookName.className = "book_name_value ";
 		bookName.textContent = book_title;
 
 		detailsHeader.appendChild(backButton);
 		detailsHeader.appendChild(bookName);
+
+		backButton.addEventListener("click", function () {
+			selectedBook = 0;
+			selectedChapter = 0;
+			activeChapter = 0;
+			document.getElementById("bookTitle").innerHTML = "";
+			rightbar.style.display = "none";
+			document.getElementById("content").style.display = "none";
+			showBookList();
+		});
 
 		const addChapterButton = document.createElement("button");
 		addChapterButton.className = "btn add_chapter_button";
@@ -551,8 +727,7 @@ async function showBookList() {
 	const res = await APIS.fetchBooks();
 	if (selectedBook) {
 		rightbar.style.display = "block";
-	} else {
-		rightbar.style.display = "none";
+		document.getElementById("content").style.display = "block";
 	}
 	const books = res?.data || [];
 	// const books = JSON.parse(sessionStorage.getItem("books") || "[]");
@@ -628,7 +803,7 @@ async function showChapterList() {
 	// Add the chapter to the list
 }
 function handleChapterClick(id) {
-	activeChapter = id;
+	activeChapter = activeChapter === id ? 0 : id;
 	showChapterList();
 }
 
@@ -645,105 +820,114 @@ function handleSectionClick(id) {
 
 console.log({ activeChapter, selectedChapter });
 // Function to add a new chapter to the accordion
-function addChapterToList(chapter, chapters) {
-	const { chapter_name, id, sections } = chapter;
-	const accordion = document.getElementById("accordionExample");
-	const chapterId = "chapter_" + id;
+function renderChapterButton(id, chapterName) {
+	const isActiveChapter = `${id}` === `${activeChapter}`;
+	const chevronClass = isActiveChapter ? "rotateXFull" : "";
+	return `
+        <button onClick="handleChapterClick('${id}')" class="grid gap-3 btn-lg accordion-button collapsed add_chapter_accordion" type="button" data-bs-toggle="collapse" data-bs-target="#collapseChapter_${id}" aria-expanded="false" aria-controls="collapseChapter_${id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down mr-3 ${chevronClass}">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+            ${chapterName}
+        </button>`;
+}
 
-	console.log({ activeChapter, activeSection, sections });
-	if (sections?.length && !activeSection) {
-		activeSection = sections[0].id;
-	}
-	const newItem = `
-		<div class="d-flex justify-content-between mb-2 " >
-			<button onClick="handleChapterClick('${id}')" class=" grid gap-3 btn-lg accordion-button collapsed add_chapter_accordion" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${chapterId}" aria-expanded="false" aria-controls="collapse${chapterId}">
-				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-					viewBox="0 0 24 24" 
-					fill="none" 
-					stroke="currentColor" 
-					stroke-width="2" 
-					stroke-linecap="round" 
-					stroke-linejoin="round" 
-					class="feather feather-chevron-down mr-3 ${
-						`${id}` === `${activeChapter}` ? "rotateXFull" : ""
-					} "><polyline points="6 9 12 15 18 9"></polyline></svg>
-				${chapter_name}
-			</button>
-			<button class="btn-lg accordion-button w-auto" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-				<svg width="20" height="20" viewBox="0 0 24 24">
-					<path
-						fill="none"
-						stroke="currentColor"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
-					/>
-				</svg>
-			</button>
-			<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
-				<li><a class="dropdown-item" onClick="editChapter('${id}','${chapter_name}')" href="#" >Edit</a></li>
-				<li><a class="dropdown-item" href="#" onClick="chapterDeleteConfirmation('${id}')"  >Delete</a></li>
-			</ul>
-		</div>
-		<div id="collapse${chapterId}" class='accordion-collapse collapse ${
-		`${id}` === `${activeChapter}` ? "show" : ""
-	}' aria-labelledby="heading${chapterId}" data-bs-parent="#accordionExample">
-			<div class="accordion-body d-grid gap-2">
+function renderChapterDropdown(id) {
+	return `
+        <button class="btn-lg accordion-button w-auto" type="button" id="chapterDropdownMenuButton_${id}" data-bs-toggle="dropdown" aria-expanded="false">
+            ${moreOptionsIcon}
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton_${id}">
+            <li><a class="dropdown-item" onClick="editChapter('${id}')" href="#">Edit</a></li>
+            <li><a class="dropdown-item" href="#" onClick="chapterDeleteConfirmation('${id}')">Delete</a></li>
+        </ul>`;
+}
+
+function renderAccordionContent(id, sections, chapterName) {
+	const isActiveChapter = `${id}` === `${activeChapter}`;
+	return `
+        <div id="collapseChapter_${id}" class='accordion-collapse collapse 
+			${isActiveChapter ? "show" : ""}' aria-labelledby="heading${id}" data-bs-parent="#accordionExample">
+				<div class="accordion-body d-grid gap-2">
 				<button
 					id="prevButton"
 					type="button"
 					class="btn btn-dark accordion-button"
 					onclick="addSection('${activeChapter}')"
 				>
-					Add a section
+					ADD A SECTION
 				</button>
-				${
-					sections.length
-						? sections.map((section) => renderSection(section, id, chapter_name)).join("")
-						: "No Content"
-				}
-			</div>
-		</div>
-	
-	`;
+					${
+						sections.length
+							? sections.map((section) => renderSection(section, id, chapterName)).join("")
+							: `<div class="accordion-body">No Content</div>`
+					}
+            </div>
+        </div>`;
+}
+
+function addChapterToList(chapter, chapters) {
+	const { chapter_name, id, sections } = chapter;
+	const accordion = document.getElementById("accordionExample");
+	if (sections?.length && !activeSection) {
+		activeSection = sections[0].id;
+	}
+
+	const chapterButton = renderChapterButton(id, chapter_name);
+	const chapterDropdown = renderChapterDropdown(id);
+	const accordionContent = renderAccordionContent(id, sections, chapter_name);
+
+	const newItem = `
+        <div class="d-flex justify-content-between mb-2">
+            ${chapterButton}
+            ${chapterDropdown}
+        </div>
+        ${accordionContent}
+    `;
+
 	accordion.insertAdjacentHTML("beforeend", newItem);
 	if (`${id}` === `${activeChapter}`) {
 		listSections(sections || []);
 	}
 }
+const moreOptionsIcon = `<svg width="20" height="20" viewBox="0 0 24 24">
+		<path
+			fill="none"
+			stroke="currentColor"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			stroke-width="2"
+			d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
+		/>
+	</svg>`;
 
-function renderSection(section, id, name) {
-	console.log({ section });
+function renderSection(section, id) {
+	const sectionIdAttr = `section_id${section.id}`;
+	const dropdownButtonClasses =
+		"h-100 btn-lg btn active d-flex gap-3 rounded-0 border-0 border-bottom text-left justify-content-between align-items-center dropdown-toggle";
+	const sectionButtonClasses =
+		"btn-lg btn active rounded-0 border-0 border-bottom d-flex gap-3 w-100 text-left justify-content-between align-items-center";
+
+	const dropdownMenu = `
+		<ul class="dropdown-menu" aria-labelledby="${sectionIdAttr}">
+			<li><a class="dropdown-item" onClick="editSection('${id}', '${section.id}')" href="#">Edit</a></li>
+			<li><a class="dropdown-item" href="#" onClick="sectionDeleteConfirmation('${section.id}')">Delete</a></li>
+		</ul>`;
+
 	return `
-	<div class="d-flex" >
-		<button class="btn-lg btn active rounded-0 rounded-start d-flex gap-3 w-100 border-end-0 text-left justify-content-between align-items-center" onClick="onSectionClick('${id}')" >
-			${section.section_title}
-		</button>	
-		<div class="dropdown h-100"  >
-			<button class=" h-100 btn-lg btn active d-flex gap-3 rounded-0 rounded-end  border-start-0  text-left justify-content-between align-items-center dropdown-toggle" type="button" id="${
-				"section_id" + section.id
-			}" data-bs-toggle="dropdown" aria-expanded="false"  >
-				<svg width="20" height="20" viewBox="0 0 24 24">
-					<path
-						fill="none"
-						stroke="currentColor"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
-					/>
-				</svg>
-			</button>	
-			<ul class="dropdown-menu" aria-labelledby="${"section_id" + section.id}">
-				<li><a class="dropdown-item" onClick="editSection('${id}','${section.id}')" href="#" >Edit</a></li>
-				<li><a class="dropdown-item" href="#" onClick="sectionDeleteConfirmation('${id}', '${
-		section.id
-	}')"  >Delete</a></li>
-			</ul>
-		</div>
-</div>`;
+		<div class="d-flex">
+			<button class="${sectionButtonClasses}" onClick="onSectionClick('${id}')">
+				${section.section_title}
+			</button>  
+			<div class="dropdown h-100">
+				<button class="${dropdownButtonClasses}" type="button" id="${sectionIdAttr}" data-bs-toggle="dropdown" aria-expanded="false">
+					${moreOptionsIcon}
+				</button>  
+				${dropdownMenu}
+			</div>
+		</div>`;
 }
+
 // SECTION CRUD
 
 function listSections(sections = []) {
@@ -816,42 +1000,44 @@ function addSection() {
 	addSectionModal.show();
 	document.getElementById("sectionForm").reset();
 }
+const sectionForm = document.getElementById("sectionForm");
+sectionForm.addEventListener("submit", saveSection);
 async function saveSection() {
 	const section_title = document.getElementById("sectionTitle").value.trim();
 	const content = quill.root.innerHTML;
 
 	// Check if the chapterTitle is empty
+	debugger;
+
 	if (!section_title) {
 		return;
 	}
-	console.log({ content });
 	const section = {
 		section_title,
 		content,
 	};
-	debugger;
-	let res;
 	try {
+		let res;
 		if (activeSection) {
-			res = await APIS.addSection(selectedBook, selectedChapter || activeChapter, section);
-		} else {
 			res = await APIS.updateSection(activeSection, section);
+		} else {
+			res = await APIS.addSection(selectedBook, selectedChapter || activeChapter, section);
+		}
+		if (res.success) {
+			showChapterList();
+			selectedSection = 0;
+			document.getElementById("sectionForm").reset();
+			addSectionModal.hide();
+			createToast({
+				type: "success",
+				status: "Successful",
+				message: `Section ${activeSection ? "updated" : "added"} successfully`,
+			});
+		} else {
+			createToast({ type: "error", status: "Failed!", message: res.error });
 		}
 	} catch (err) {
 		createToast({ type: "error", status: "Failed!", message: "Something went wrong" });
-	}
-	if (res.success) {
-		showChapterList();
-		selectedSection = 0;
-		document.getElementById("sectionForm").reset();
-		addSectionModal.hide();
-		createToast({
-			type: "success",
-			status: "Successful",
-			message: "Citation added successfully",
-		});
-	} else {
-		createToast({ type: "error", status: "Failed!", message: res.error });
 	}
 }
 
@@ -895,7 +1081,7 @@ async function deleteChapter(id) {
 				message: `Chapter deleted successfully`,
 			});
 			showChapterList();
-	deleteConfirmationModal.hide()
+			deleteConfirmationModal.hide();
 		} else {
 			createToast({ type: "error", status: "Error", message: res.error });
 		}
@@ -910,17 +1096,15 @@ async function deleteChapter(id) {
 	showChapterList();
 	deleteConfirmationModal.hide();
 }
-async function deleteSection(id, sec) {
+async function deleteSection(id) {
 	try {
 		const res = await APIS.deleteSection(id);
 		if (res.success) {
 			createToast({
 				type: "success",
 				status: "Successful",
-				message: `${book_title} ${!selectedBook ? "added" : "updated"} successfully`,
+				message: `Section deleted successfully`,
 			});
-			console.log({ books });
-			sessionStorage.setItem("books", JSON.stringify(books));
 			showChapterList();
 			selectedSection = 0;
 			activeSection = 0;
@@ -955,12 +1139,12 @@ function chapterDeleteConfirmation(id) {
 		document.getElementById("chapterForm").reset();
 	});
 }
-function sectionDeleteConfirmation(id, sec) {
+function sectionDeleteConfirmation(id) {
 	deleteConfirmationModal.show();
 
 	// Set up event listener for delete confirmation button
 	document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
-		deleteSection(id, sec);
+		deleteSection(id);
 	});
 	document.getElementById("cancelConfirmationModal").addEventListener("click", function () {
 		selectedSection = 0;
@@ -972,92 +1156,6 @@ function sectionDeleteConfirmation(id, sec) {
 	});
 }
 
-let Inline = Quill.import("blots/inline");
-
-class Citation extends Inline {
-	static create(citationId) {
-		let node = super.create();
-		node.setAttribute("class", "citation");
-		node.setAttribute("id", citationId);
-		return node;
-	}
-
-	static formats(node) {
-		return node.getAttribute("id");
-	}
-}
-Citation.blotName = "citation";
-Citation.tagName = "span";
-
-Quill.register(Citation);
-
-let BlockEmbed = Quill.import("blots/block/embed");
-
-class FigureBlot extends BlockEmbed {
-	static create(value) {
-		let node = super.create();
-		node.setAttribute("id", value.id);
-
-		const img = document.createElement("img");
-		img.setAttribute("src", value.src);
-		node.appendChild(img);
-
-		const caption = document.createElement("figcaption");
-		caption.textContent = value.caption;
-		node.appendChild(caption);
-
-		return node;
-	}
-
-	static value(node) {
-		return {
-			id: node.getAttribute("id"),
-			src: node.firstChild.getAttribute("src"),
-			caption: node.lastChild.textContent,
-		};
-	}
-}
-
-FigureBlot.blotName = "figure";
-FigureBlot.tagName = "figure";
-Quill.register(FigureBlot);
-
-async function addCitation() {
-	let citationText = prompt("Enter the citation:");
-	if (citationText) {
-		let range = quill.getSelection();
-		if (range && range.length > 0) {
-			let citationId = "citation-" + Date.now();
-			quill.format("citation", citationText, Quill.sources.USER);
-			quill.formatText(range.index, range.length, { citation: citationId });
-			try {
-				quill.formatText(range.index, range.length, { citation: citationId });
-				// const res = await APIS.addCitation({
-				// 	citation_id: citationId,
-				// 	citation_name: citationText,
-				// 	book_id: selectedBook,
-				// });
-				// if (res.success) {
-				// 	quill.formatText(range.index, range.length, { citation: citationId });
-				// 	createToast({
-				// 		type: "success",
-				// 		status: "Successful",
-				// 		message: "Citation added successfully",
-				// 	});
-				// 	updateCitationList(citationId, citationText);
-				// } else {
-				// 	createToast({ type: "error", status: "Failed!", message: res.error });
-				// }
-			} catch (err) {
-				createToast({ type: "error", status: "Error!", message: "Something went wrong" });
-			}
-			// Update the citation list
-		} else {
-			alert("Please select text to add a citation.");
-		}
-	}
-}
-
 async function updateCitationList() {
 	let citationsDiv = document.getElementById("citations-container");
 	try {
@@ -1066,10 +1164,13 @@ async function updateCitationList() {
 			const citations = res.data || [];
 			for (let i = 0; i < citations.length; i++) {
 				let citationElement = document.createElement("li");
-				citationElement.innerHTML = `<li>
-						<a href="#${citations[i].citation_id}">${citations[i].citation_name}</a
-						>
-					</li>`;
+				citationElement.innerHTML = `
+						<a href="#${citations[i].citation_id}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+							 ${citations[i].citation_name}
+						</a>
+						<svg onClick="deleteFigureAndCitationModal('citation','${citations[i].citation_id}')" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+						`;
 				citationsDiv.appendChild(citationElement);
 			}
 			console.log({ res });
@@ -1089,18 +1190,18 @@ async function updateFigureList() {
 			for (let i = 0; i < figures.length; i++) {
 				let figureElement = document.createElement("li");
 				figureElement.innerHTML = `
-						<li>
-							<a href="#${figures[i].figure_id}">
-								<i>
-									<svg width="20" height="20" viewBox="0 0 1920 1536">
-										<path
-											fill="currentColor"
-											d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z" />
-									</svg>
-								</i>
-								${figures[i].figure_name}
-							</a>
-						</li>
+					<a href="#${figures[i].figure_id}">
+						<i>
+							<svg width="20" height="20" viewBox="0 0 1920 1536">
+								<path
+									fill="currentColor"
+									d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z" />
+							</svg>
+						</i>
+						${figures[i].figure_name}
+					</a>
+					<svg onClick="deleteFigureAndCitationModal('figure','${figures[i].figure_id}')" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+						
 					`;
 				citationsDiv.appendChild(figureElement);
 			}
@@ -1112,14 +1213,40 @@ async function updateFigureList() {
 	}
 }
 
-let contentDisplayDiv = document.getElementById("content-display");
+// Function to show delete confirmation modal
+function deleteFigureAndCitationModal(key, id) {
+	deleteConfirmationModal.show();
 
-quill.on("text-change", function (delta, oldDelta, source) {
-	if (delta.ops.length === 2 && delta.ops[1].insert === "\n") {
-		// Display editor's content in the contentDisplayDiv
-		contentDisplayDiv.innerHTML = quill.root.innerHTML;
+	// Set up event listener for delete confirmation button
+	document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
+		deleteFigureAndCitation(key, id);
+	});
+}
+
+const deleteFigureAndCitation = async (key, id) => {
+	try {
+		let res;
+		if (key === "figure") {
+			res = await APIS.deleteFigure(id);
+		} else {
+			res = await APIS.deleteCitation(id);
+		}
+		if (res.success) {
+			deleteConfirmationModal.hide();
+			createToast({
+				type: "success",
+				status: "Successful",
+				message: `Deleted ${key} successfully`,
+			});
+		} else {
+			createToast({ type: "error", status: "Failed!", message: res.error });
+		}
+	} catch (err) {
+		createToast({ type: "error", status: "Failed!", message: "Something went wrong" });
 	}
-});
+};
+
+let contentDisplayDiv = document.getElementById("content-display");
 
 const renderAddBook = ({ id, image, book_title }) => `
 		<span class="book-name d-flex w-100 justify-content-between" >
