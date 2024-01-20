@@ -22,7 +22,7 @@ const APIS = {
 	updateChapter: (id, payload) => makeRequest(`/chapter/${id}`, "PUT", payload),
 	addCitation: (payload) => makeRequest(`/citation/${payload.book_id}`, "POST", payload),
 	getCitations: (id) => makeRequest(`/citations/${id}`),
-	addFigure: (payload) => makeRequest(`/figure/${payload.book_id}`, "POST", payload),
+	addFigure: (book_id, formData) => makeRequest(`/figure/${book_id}`, "POST", formData, true),
 	getFigures: (id) => makeRequest(`/figures/${id}`),
 	addSection: (book_id, chapter_id, payload) =>
 		makeRequest(`/book/${book_id}/chapter/${chapter_id}`, "POST", payload),
@@ -36,7 +36,6 @@ const APIS = {
 	updateFigure: (payload) => makeRequest(`/figure/${payload.figure_id}`, "PUT", payload),
 	deleteFigure: (id) => makeRequest(`/figure/${id}`, "DELETE"),
 	deleteCitation: (id) => makeRequest(`/citation/${id}`, "DELETE"),
-	
 };
 
 const toolbarOptions = [
@@ -58,6 +57,23 @@ const toolbarOptions = [
 ];
 
 const notifications = document.querySelector(".notifications");
+const sectionForm = document.getElementById("sectionForm");
+const modal = new bootstrap.Modal(document.getElementById("addBookModal"));
+const addChapterModal = new bootstrap.Modal(document.getElementById("addChapterModal"));
+const addSectionModal = new bootstrap.Modal(document.getElementById("addSectionModal"));
+const deleteConfirmationModal = new bootstrap.Modal(
+	document.getElementById("deleteConfirmationModal")
+);
+
+/* const deleteConfirmationModal = new bootstrap.Modal(
+	document.getElementById("deleteConfirmationModal")
+);
+const deleteConfirmationModal = new bootstrap.Modal(
+	document.getElementById("deleteConfirmationModal")
+);
+const deleteConfirmationModal = new bootstrap.Modal(
+	document.getElementById("deleteConfirmationModal")
+); */
 
 const removeToast = (toast) => {
 	toast.classList.add("hide");
@@ -123,10 +139,11 @@ class FigureBlot extends BlockEmbed {
 	}
 
 	static value(node) {
+		console.log({ node, first: node.firstChild, last: node.lastChild });
 		return {
 			id: node.getAttribute("id"),
-			src: node.firstChild.getAttribute("src"),
-			caption: node.lastChild.textContent,
+			src: node.firstChild ? node.firstChild.getAttribute("src") : "",
+			caption: node.lastChild ? node.lastChild.textContent : "",
 		};
 	}
 }
@@ -179,7 +196,6 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 	}
 
 	async save(e) {
-		debugger;
 		e.preventDefault();
 		const value = this.textbox.value;
 
@@ -187,17 +203,18 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 			return this.showEmptyValueError();
 		}
 		const figure = this.figure;
-		console.log({ figure });
+		debugger;
 		try {
 			let figure_id = figure.figure_id || generateId("figure");
-			let res = await APIS.addFigure({
-				figure_id,
-				figure_name: value,
-				book_id: selectedBook,
-				figure_image: figure?.figure_image,
-			});
+			const formData = new FormData();
+			formData.append("book_id", selectedBook);
+			formData.append("figure_image", figure?.figure_image);
+			formData.append("figure_id", figure_id);
+			formData.append("figure_name", value);
+			let res = await APIS.addFigure(selectedBook, formData);
 			if (res.success) {
-				this.updateQuillEditor(figure_id);
+				this.updateQuillEditor(figure_id, res.image );
+				updateFigureList();
 				this.showSuccessToast();
 				this.hide();
 			} else {
@@ -209,14 +226,14 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 		}
 	}
 
-	updateQuillEditor(figure_id) {
+	updateQuillEditor(figure_id, image) {
 		const range = this.quill.getSelection(true);
 		const figure = this.figure;
 		const value = this.textbox.value;
 
 		this.quill.insertEmbed(range.index, "figure", {
 			id: figure_id,
-			src: figure.figure_image,
+			src: image,
 			caption: value,
 		});
 	}
@@ -317,6 +334,7 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 					citation_id,
 					Quill.sources.USER
 				);
+				updateCitationList();
 				this.hide();
 				createToast({
 					type: "success",
@@ -359,13 +377,9 @@ const imageHandler = async () => {
 	input.onchange = () => {
 		const file = input.files[0];
 		if (file) {
-			const reader = new FileReader();
-			reader.onload = async (e) => {
-				const figure_image = e.target.result;
-				const figureTooltip = quill.getModule("figureTooltip");
-				figureTooltip.show({ figure_image });
-			};
-			reader.readAsDataURL(file);
+			const figure_image = file;
+			const figureTooltip = quill.getModule("figureTooltip");
+			figureTooltip.show({ figure_image });
 		}
 	};
 };
@@ -417,20 +431,10 @@ async function makeRequest(url, method = "GET", body = null, isFormData) {
 
 // BOOKS CRUD
 
-const modal = new bootstrap.Modal(document.getElementById("addBookModal"));
-const addChapterModal = new bootstrap.Modal(document.getElementById("addChapterModal"));
-const addSectionModal = new bootstrap.Modal(document.getElementById("addSectionModal"));
-
 modal._element.addEventListener("hidden.bs.modal", function () {
 	document.getElementById("modalForm").reset();
 	document.getElementById("image").value = "";
 	document.getElementById("imagePreview").innerHTML = "";
-	selectedBook = 0;
-});
-modal._element.addEventListener("hidden.bs.modal", function () {
-	document.getElementById("image").value = "";
-	document.getElementById("imagePreview").innerHTML = "";
-	document.getElementById("modalForm").reset();
 	selectedBook = 0;
 });
 
@@ -636,20 +640,6 @@ function uploadImage() {
 	}
 }
 
-const deleteConfirmationModal = new bootstrap.Modal(
-	document.getElementById("deleteConfirmationModal")
-);
-
-// Function to show delete confirmation modal
-function showDeleteConfirmation(itemId) {
-	deleteConfirmationModal.show();
-
-	// Set up event listener for delete confirmation button
-	document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
-		deleteBook(itemId);
-	});
-}
-
 // Function to update book details content
 async function updateBookDetails(id) {
 	const res = await APIS.fetchBook(id);
@@ -753,7 +743,6 @@ async function saveChapter() {
 		chapter_name,
 	};
 	try {
-		debugger;
 		let res;
 		if (selectedChapter) {
 			res = await APIS.updateChapter(selectedChapter, chapter);
@@ -774,13 +763,9 @@ async function saveChapter() {
 			createToast({ type: "error", status: "Failed", message: res.error });
 		}
 	} catch (err) {
-		console.log({ err });
-		debugger;
-
 		createToast({ type: "error", status: "Failed", message: "Something went wrong" });
 	}
 }
-let chapterIdCounter = 0;
 
 async function showChapterList() {
 	const res = await APIS.fetchBook(selectedBook);
@@ -818,7 +803,6 @@ function handleSectionClick(id) {
 	// showChapterList()
 }
 
-console.log({ activeChapter, selectedChapter });
 // Function to add a new chapter to the accordion
 function renderChapterButton(id, chapterName) {
 	const isActiveChapter = `${id}` === `${activeChapter}`;
@@ -1000,14 +984,14 @@ function addSection() {
 	addSectionModal.show();
 	document.getElementById("sectionForm").reset();
 }
-const sectionForm = document.getElementById("sectionForm");
-sectionForm.addEventListener("submit", saveSection);
+
+sectionForm.removeEventListener("submit", saveSection);
 async function saveSection() {
 	const section_title = document.getElementById("sectionTitle").value.trim();
 	const content = quill.root.innerHTML;
-
-	// Check if the chapterTitle is empty
-	debugger;
+	const c = quill.getContents();
+	console.log(c);
+	console.log({ content });
 
 	if (!section_title) {
 		return;
@@ -1018,13 +1002,15 @@ async function saveSection() {
 	};
 	try {
 		let res;
-		if (activeSection) {
-			res = await APIS.updateSection(activeSection, section);
-		} else {
-			res = await APIS.addSection(selectedBook, selectedChapter || activeChapter, section);
-		}
+
+		// if (activeSection) {
+		// 	res = await APIS.updateSection(activeSection, section);
+		// } else {
+		// 	res = await APIS.addSection(selectedBook, selectedChapter || activeChapter, section);
+		// }
 		if (res.success) {
 			showChapterList();
+			quill.setContents([]);
 			selectedSection = 0;
 			document.getElementById("sectionForm").reset();
 			addSectionModal.hide();
@@ -1037,9 +1023,11 @@ async function saveSection() {
 			createToast({ type: "error", status: "Failed!", message: res.error });
 		}
 	} catch (err) {
+		console.log({ err });
 		createToast({ type: "error", status: "Failed!", message: "Something went wrong" });
 	}
 }
+sectionForm.addEventListener("submit", saveSection);
 
 // Function to edit a chapter
 function editChapter(id, name) {
@@ -1051,6 +1039,7 @@ async function editSection(id, sectionId) {
 	selectedSection = sectionId;
 	activeSection = sectionId;
 	let section = {};
+
 	try {
 		const res = await APIS.getSection(sectionId);
 		console.log({ res }, "section");
@@ -1064,6 +1053,7 @@ async function editSection(id, sectionId) {
 			addSectionModal.show();
 			document.getElementById("sectionTitle").value = section.section_title;
 			quill.clipboard.dangerouslyPasteHTML(section.content);
+
 			// document.getElementById("sectionContent").value = section.content;
 		}
 	} catch (err) {}
@@ -1093,8 +1083,6 @@ async function deleteChapter(id) {
 			message: `Something went wrong`,
 		});
 	}
-	showChapterList();
-	deleteConfirmationModal.hide();
 }
 async function deleteSection(id) {
 	try {
@@ -1122,42 +1110,98 @@ async function deleteSection(id) {
 		});
 	}
 }
+// Function to show delete confirmation modal
+function showDeleteConfirmation(itemId) {
+	deleteConfirmationModal.show();
+
+	const confirmButton = document.getElementById("confirmDeleteBtn");
+	const cancelButton = document.getElementById("cancelConfirmationModal");
+	// Set up event listener for delete confirmation button
+	confirmButton.removeEventListener("click", confirmButton.clickHandler);
+
+	confirmButton.clickHandler = () => {
+		deleteBook(itemId);
+	};
+	confirmButton.addEventListener("click", confirmButton.clickHandler);
+
+	cancelButton.removeEventListener("click", cancelButton.clickHandler);
+
+	cancelButton.clickHandler = () => {
+		deleteConfirmationModal.hide();
+	};
+	cancelButton.addEventListener("click", cancelButton.clickHandler);
+}
 // Function to show delete confirmation modal for chapters
 function chapterDeleteConfirmation(id) {
 	deleteConfirmationModal.show();
 
+	const confirmButton = document.getElementById("confirmDeleteBtn");
+	const cancelButton = document.getElementById("cancelConfirmationModal");
 	// Set up event listener for delete confirmation button
-	document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
+	confirmButton.removeEventListener("click", confirmButton.clickHandler);
+
+	confirmButton.clickHandler = () => {
 		deleteChapter(id);
-	});
-	document.getElementById("cancelConfirmationModal").addEventListener("click", function () {
+	};
+	confirmButton.addEventListener("click", confirmButton.clickHandler);
+
+	cancelButton.removeEventListener("click", cancelButton.clickHandler);
+
+	cancelButton.clickHandler = () => {
 		selectedChapter = 0;
 		document.getElementById("chapterForm").reset();
-	});
-	document.getElementById("cancelConfirmationButton").addEventListener("click", function () {
-		selectedChapter = 0;
-		document.getElementById("chapterForm").reset();
-	});
+		deleteConfirmationModal.hide();
+	};
+	cancelButton.addEventListener("click", cancelButton.clickHandler);
 }
 function sectionDeleteConfirmation(id) {
 	deleteConfirmationModal.show();
 
+	const confirmButton = document.getElementById("confirmDeleteBtn");
+	const cancelButton = document.getElementById("cancelConfirmationModal");
 	// Set up event listener for delete confirmation button
-	document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
+	confirmButton.removeEventListener("click", confirmButton.clickHandler);
+
+	confirmButton.clickHandler = () => {
 		deleteSection(id);
-	});
-	document.getElementById("cancelConfirmationModal").addEventListener("click", function () {
+	};
+
+	confirmButton.addEventListener("click", confirmButton.clickHandler);
+	cancelButton.removeEventListener("click", cancelButton.clickHandler);
+
+	cancelButton.clickHandler = () => {
 		selectedSection = 0;
 		document.getElementById("sectionForm").reset();
-	});
-	document.getElementById("cancelConfirmationButton").addEventListener("click", function () {
-		selectedSection = 0;
-		document.getElementById("sectionForm").reset();
-	});
+		deleteConfirmationModal.hide();
+	};
+	cancelButton.addEventListener("click", cancelButton.clickHandler);
+}
+
+// Function to show delete confirmation modal
+function deleteFigureAndCitationModal(key, id) {
+	deleteConfirmationModal.show();
+
+	const confirmButton = document.getElementById("confirmDeleteBtn");
+	const cancelButton = document.getElementById("cancelConfirmationModal");
+	// Set up event listener for delete confirmation button
+	confirmButton.removeEventListener("click", confirmButton.clickHandler);
+
+	confirmButton.clickHandler = () => {
+		deleteFigureAndCitation(key, id);
+	};
+
+	confirmButton.addEventListener("click", confirmButton.clickHandler);
+	cancelButton.removeEventListener("click", cancelButton.clickHandler);
+
+	cancelButton.clickHandler = () => {
+		deleteConfirmationModal.hide();
+	};
+	cancelButton.addEventListener("click", cancelButton.clickHandler);
 }
 
 async function updateCitationList() {
 	let citationsDiv = document.getElementById("citations-container");
+	citationsDiv.innerHTML = "";
 	try {
 		const res = await APIS.getCitations(selectedBook);
 		if (res.success) {
@@ -1182,7 +1226,8 @@ async function updateCitationList() {
 	}
 }
 async function updateFigureList() {
-	let citationsDiv = document.getElementById("figures-container");
+	let figureDiv = document.getElementById("figures-container");
+	figureDiv.innerHTML = "";
 	try {
 		const res = await APIS.getFigures(selectedBook);
 		if (res.success) {
@@ -1203,7 +1248,7 @@ async function updateFigureList() {
 					<svg onClick="deleteFigureAndCitationModal('figure','${figures[i].figure_id}')" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
 						
 					`;
-				citationsDiv.appendChild(figureElement);
+				figureDiv.appendChild(figureElement);
 			}
 		} else {
 			createToast({ type: "error", status: "Failed!", message: res.error });
@@ -1211,16 +1256,6 @@ async function updateFigureList() {
 	} catch (err) {
 		createToast({ type: "error", status: "Error!", message: "Something went wrong" });
 	}
-}
-
-// Function to show delete confirmation modal
-function deleteFigureAndCitationModal(key, id) {
-	deleteConfirmationModal.show();
-
-	// Set up event listener for delete confirmation button
-	document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
-		deleteFigureAndCitation(key, id);
-	});
 }
 
 const deleteFigureAndCitation = async (key, id) => {
@@ -1238,6 +1273,11 @@ const deleteFigureAndCitation = async (key, id) => {
 				status: "Successful",
 				message: `Deleted ${key} successfully`,
 			});
+			if (key === "figure") {
+				updateFigureList();
+			} else {
+				updateCitationList();
+			}
 		} else {
 			createToast({ type: "error", status: "Failed!", message: res.error });
 		}
@@ -1246,33 +1286,31 @@ const deleteFigureAndCitation = async (key, id) => {
 	}
 };
 
-let contentDisplayDiv = document.getElementById("content-display");
-
 const renderAddBook = ({ id, image, book_title }) => `
-		<span class="book-name d-flex w-100 justify-content-between" >
-			<span onclick="showBookDetails('${id}')" >
-				<span> <img height="40px" width="40px" style="border-radius: 10px" src="${
-					base_url + "/" + image
-				}"/> </span>
-				<span> ${book_title} </span>
-			</span>
-			<div class="dropdown">
-				<button class="btn  btn-sm dropdown_btn dropdown-toggle" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-					<svg width="20" height="20" viewBox="0 0 24 24">
-						<path
-							fill="none"
-							stroke="currentColor"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
-						/>
-					</svg>
-				</button>
-				<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
-					<li><a class="dropdown-item" href="#" onclick="editBook('${id}')">Edit</a></li>
-					<li><a class="dropdown-item" href="#" onclick="showDeleteConfirmation('${id}')">Delete</a></li>
-				</ul>
-			</div>
+	<span class="book-name d-flex w-100 justify-content-between" >
+		<span onclick="showBookDetails('${id}')" >
+			<span> <img height="40px" width="40px" style="border-radius: 10px" src="${
+				base_url + "/" + image
+			}"/> </span>
+			<span> ${book_title} </span>
 		</span>
-	`;
+		<div class="dropdown">
+			<button class="btn  btn-sm dropdown_btn dropdown-toggle" type="button" id="chapterDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+				<svg width="20" height="20" viewBox="0 0 24 24">
+					<path
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
+					/>
+				</svg>
+			</button>
+			<ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton">
+				<li><a class="dropdown-item" href="#" onclick="editBook('${id}')">Edit</a></li>
+				<li><a class="dropdown-item" href="#" onclick="showDeleteConfirmation('${id}')">Delete</a></li>
+			</ul>
+		</div>
+	</span>
+`;
