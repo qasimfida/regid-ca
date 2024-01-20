@@ -10,7 +10,7 @@ const Inline = Quill.import("blots/inline");
 const BlockEmbed = Quill.import("blots/block/embed");
 const rightbar = document.getElementById("rightbar");
 
-const base_url = "http://localhost:8080/books";
+const base_url = "http://localhost:8080/boiler";
 const APIS = {
 	fetchBooks: () => makeRequest(`/books`),
 	fetchBook: (id) => makeRequest(`/books/${id}`),
@@ -205,6 +205,7 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 		const figure = this.figure;
 		debugger;
 		try {
+			debugger;
 			let figure_id = figure.figure_id || generateId("figure");
 			const formData = new FormData();
 			formData.append("book_id", selectedBook);
@@ -213,7 +214,7 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 			formData.append("figure_name", value);
 			let res = await APIS.addFigure(selectedBook, formData);
 			if (res.success) {
-				this.updateQuillEditor(figure_id, res.image );
+				this.updateQuillEditor(figure_id, res.data.figure_image );
 				updateFigureList();
 				this.showSuccessToast();
 				this.hide();
@@ -230,10 +231,11 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 		const range = this.quill.getSelection(true);
 		const figure = this.figure;
 		const value = this.textbox.value;
+		const imageSrc = base_url + "/" + image;
 
 		this.quill.insertEmbed(range.index, "figure", {
 			id: figure_id,
-			src: image,
+			src: imageSrc,
 			caption: value,
 		});
 	}
@@ -377,9 +379,13 @@ const imageHandler = async () => {
 	input.onchange = () => {
 		const file = input.files[0];
 		if (file) {
-			const figure_image = file;
-			const figureTooltip = quill.getModule("figureTooltip");
-			figureTooltip.show({ figure_image });
+			const reader = new FileReader();
+			reader.onload = async (e) => {
+				const figure_image = e.target.result;
+				const figureTooltip = quill.getModule("figureTooltip");
+				figureTooltip.show({ figure_image });
+			};
+			reader.readAsDataURL(file);
 		}
 	};
 };
@@ -987,6 +993,7 @@ function addSection() {
 
 sectionForm.removeEventListener("submit", saveSection);
 async function saveSection() {
+	debugger
 	const section_title = document.getElementById("sectionTitle").value.trim();
 	const content = quill.root.innerHTML;
 	const c = quill.getContents();
@@ -1003,11 +1010,11 @@ async function saveSection() {
 	try {
 		let res;
 
-		// if (activeSection) {
-		// 	res = await APIS.updateSection(activeSection, section);
-		// } else {
-		// 	res = await APIS.addSection(selectedBook, selectedChapter || activeChapter, section);
-		// }
+		if (activeSection) {
+			res = await APIS.updateSection(activeSection, section);
+		} else {
+			res = await APIS.addSection(selectedBook, selectedChapter || activeChapter, section);
+		}
 		if (res.success) {
 			showChapterList();
 			quill.setContents([]);
@@ -1026,6 +1033,7 @@ async function saveSection() {
 		console.log({ err });
 		createToast({ type: "error", status: "Failed!", message: "Something went wrong" });
 	}
+	debugger
 }
 sectionForm.addEventListener("submit", saveSection);
 
