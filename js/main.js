@@ -10,7 +10,7 @@ const Inline = Quill.import("blots/inline");
 const BlockEmbed = Quill.import("blots/block/embed");
 const rightbar = document.getElementById("rightbar");
 
-const base_url = "http://localhost:8080/boiler";
+const base_url = "https://regid.ca/AW-Dev3/books/public/";
 const APIS = {
 	fetchBooks: () => makeRequest(`/books`),
 	fetchBook: (id) => makeRequest(`/books/${id}`),
@@ -203,9 +203,7 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 			return this.showEmptyValueError();
 		}
 		const figure = this.figure;
-		debugger;
 		try {
-			debugger;
 			let figure_id = figure.figure_id || generateId("figure");
 			const formData = new FormData();
 			formData.append("book_id", selectedBook);
@@ -993,7 +991,6 @@ function addSection() {
 
 sectionForm.removeEventListener("submit", saveSection);
 async function saveSection() {
-	debugger
 	const section_title = document.getElementById("sectionTitle").value.trim();
 	const content = quill.root.innerHTML;
 	const c = quill.getContents();
@@ -1033,7 +1030,6 @@ async function saveSection() {
 		console.log({ err });
 		createToast({ type: "error", status: "Failed!", message: "Something went wrong" });
 	}
-	debugger
 }
 sectionForm.addEventListener("submit", saveSection);
 
