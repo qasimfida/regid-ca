@@ -10,7 +10,8 @@ const Inline = Quill.import("blots/inline");
 const BlockEmbed = Quill.import("blots/block/embed");
 const rightbar = document.getElementById("rightbar");
 
-const base_url = "https://regid.ca/AW-Dev3/books/public/";
+// const base_url = "https://regid.ca/AW-Dev3/books/public/";
+const base_url = "http://localhost:8080/books";
 const APIS = {
 	fetchBooks: () => makeRequest(`/books`),
 	fetchBook: (id) => makeRequest(`/books/${id}`),
@@ -210,9 +211,10 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 			formData.append("figure_image", figure?.figure_image);
 			formData.append("figure_id", figure_id);
 			formData.append("figure_name", value);
+			formData.append("chapter_id", selectedChapter || activeChapter);
 			let res = await APIS.addFigure(selectedBook, formData);
 			if (res.success) {
-				this.updateQuillEditor(figure_id, res.data.figure_image );
+				this.updateQuillEditor(figure_id, res.data.figure_image);
 				updateFigureList();
 				this.showSuccessToast();
 				this.hide();
@@ -325,7 +327,12 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 		let range = this.quill.getSelection(true);
 		let citation_id = generateId("citation");
 		try {
-			const res = await APIS.addCitation({ citation_id, citation_name, book_id: selectedBook });
+			const res = await APIS.addCitation({
+				citation_id,
+				citation_name,
+				book_id: selectedBook,
+				chapter_id: selectedChapter || activeChapter,
+			});
 			if (res.success) {
 				this.quill.formatText(
 					range.index,
@@ -510,17 +517,6 @@ async function saveBook() {
 	}
 }
 
-// Function to add a Book to the list
-function addBook(book) {
-	const { id } = book;
-	const itemList = document.getElementById("book-list");
-	const li = document.createElement("li");
-	li.id = id;
-	li.className = "list-group-item d-flex justify-content-between align-items-center";
-	li.innerHTML = renderAddBook(book);
-	itemList.appendChild(li);
-}
-
 // Function to edit an existing item
 async function editBook(id) {
 	const res = await APIS.fetchBook(id);
@@ -693,7 +689,7 @@ async function updateBookDetails(id) {
 		// Create the accordion for chapters
 		const accordion = document.createElement("div");
 		accordion.className = "accordion";
-		accordion.id = "accordionExample";
+		accordion.id = "chapter-accordion";
 
 		// Append the created elements to the book details content
 		bookDetailsContent.appendChild(detailsHeader);
@@ -718,20 +714,33 @@ function showBookDetails(id) {
 
 // Function to show book list
 async function showBookList() {
-	const res = await APIS.fetchBooks();
-	if (selectedBook) {
-		rightbar.style.display = "block";
-		document.getElementById("content").style.display = "block";
+	try {
+		const res = await APIS.fetchBooks();
+		const books = res?.data || [];
+		const list = document.getElementById("book-list");
+
+		list.innerHTML = books.map((book) => createBookListItem(book)).join("");
+
+		// Toggle visibility of elements based on whether a book is selected
+		toggleBookDetailsVisibility(selectedBook != null);
+	} catch (error) {
+		console.error("Error fetching books: ", error);
+		// Handle the error appropriately
 	}
-	const books = res?.data || [];
-	// const books = JSON.parse(sessionStorage.getItem("books") || "[]");
-	const list = document.getElementById("book-list");
-	list.innerHTML = "";
-	for (let book = 0; book < books.length; book++) {
-		addBook(books[book]);
-	}
-	document.getElementById("bookDetails").style.display = "none";
-	document.getElementById("bookList").style.display = "block";
+}
+
+function toggleBookDetailsVisibility(show) {
+	document.getElementById("rightbar").style.display = show ? "block" : "none";
+	document.getElementById("bookDetails").style.display = show ? "none" : "block";
+	document.getElementById("bookList").style.display = show ? "block" : "none";
+}
+
+function createBookListItem(book) {
+	const li = document.createElement("li");
+	li.id = book.id;
+	li.className = "list-group-item d-flex justify-content-between align-items-center";
+	li.innerHTML = renderAddBook(book);
+	return li.outerHTML;
 }
 
 // Function to add a new chapter
@@ -771,39 +780,45 @@ async function saveChapter() {
 	}
 }
 
-async function showChapterList() {
+async function showChapterList(elem) {
 	const res = await APIS.fetchBook(selectedBook);
 	if (res.success) {
 		const book = res.data.book;
 		const chapters = res.data?.chapters || [];
-		const accordion = document.getElementById("accordionExample");
+		const accordion = document.getElementById("chapter-accordion");
 		accordion.innerHTML = "";
-		for (let i = 0; i < chapters.length; i++) {
+
+		chapters.forEach((chapter, i) => {
 			if (i === 0 && !activeChapter) {
-				activeChapter = chapters[i].id;
+				activeChapter = chapter.id;
 			}
-			addChapterToList(chapters[i], chapters);
-		}
+			addChapterToList(chapter, listSections, elem);
+		});
+
 		document.getElementById("bookTitle").innerHTML = book.book_title;
 	} else {
-		console.log({ res }, "Error fetching ");
+		console.log({ res }, "Error fetching");
 	}
-
-	// Add the chapter to the list
 }
+
 function handleChapterClick(id) {
 	activeChapter = activeChapter === id ? 0 : id;
 	showChapterList();
 }
 
-function onSectionClick(id) {
+function scrollIntoView(id) {
+	console.log({ id }, "Asdf");
 	const element = document.getElementById(id);
-	element.scrollIntoView({ behavior: "smooth", block: "start", inline: "start" });
+	if (element) {
+		element.scrollIntoView({ behavior: "smooth", block: "start", inline: "start" });
+	} else {
+		console.log({ message: `Element with the id: ${id} not found` });
+	}
 }
 
 function handleSectionClick(id) {
 	activeSection = id;
-	onSectionClick(id);
+	scrollIntoView(id);
 	// showChapterList()
 }
 
@@ -812,72 +827,93 @@ function renderChapterButton(id, chapterName) {
 	const isActiveChapter = `${id}` === `${activeChapter}`;
 	const chevronClass = isActiveChapter ? "rotateXFull" : "";
 	return `
-        <button onClick="handleChapterClick('${id}')" class="grid gap-3 btn-lg accordion-button collapsed add_chapter_accordion" type="button" data-bs-toggle="collapse" data-bs-target="#collapseChapter_${id}" aria-expanded="false" aria-controls="collapseChapter_${id}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down mr-3 ${chevronClass}">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-            ${chapterName}
-        </button>`;
+	<div class="d-flex" >
+		<button onClick="handleChapterClick('${id}')" class="grid gap-3 btn-lg accordion-button collapsed add_chapter_accordion" type="button" data-bs-toggle="collapse" data-bs-target="#collapseChapter_${id}" aria-expanded="false" aria-controls="collapseChapter_${id}">
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down mr-3 ${chevronClass}">
+				<polyline points="6 9 12 15 18 9"></polyline>
+			</svg>
+			${chapterName}
+			</button>
+			${renderChapterDropdown(id, chapterName)}			
+	</div>`;
 }
 
-function renderChapterDropdown(id) {
+function renderChapterDropdown(id, name) {
 	return `
         <button class="btn-lg accordion-button w-auto" type="button" id="chapterDropdownMenuButton_${id}" data-bs-toggle="dropdown" aria-expanded="false">
             ${moreOptionsIcon}
         </button>
         <ul class="dropdown-menu" aria-labelledby="chapterDropdownMenuButton_${id}">
-            <li><a class="dropdown-item" onClick="editChapter('${id}')" href="#">Edit</a></li>
+            <li><a class="dropdown-item" onClick="editChapter('${id}', '${name}')" href="#">Edit</a></li>
             <li><a class="dropdown-item" href="#" onClick="chapterDeleteConfirmation('${id}')">Delete</a></li>
         </ul>`;
 }
 
 function renderAccordionContent(id, sections, chapterName) {
 	const isActiveChapter = `${id}` === `${activeChapter}`;
-	return `
-        <div id="collapseChapter_${id}" class='accordion-collapse collapse 
-			${isActiveChapter ? "show" : ""}' aria-labelledby="heading${id}" data-bs-parent="#accordionExample">
-				<div class="accordion-body d-grid gap-2">
-				<button
-					id="prevButton"
-					type="button"
-					class="btn btn-dark accordion-button"
-					onclick="addSection('${activeChapter}')"
-				>
-					ADD A SECTION
-				</button>
-					${
-						sections.length
-							? sections.map((section) => renderSection(section, id, chapterName)).join("")
-							: `<div class="accordion-body">No Content</div>`
-					}
-            </div>
-        </div>`;
+
+	const accordionContentDiv = document.createElement("div");
+	accordionContentDiv.id = `collapseChapter_${id}`;
+	accordionContentDiv.className = `accordion-collapse collapse ${isActiveChapter ? "show" : ""}`;
+	accordionContentDiv.setAttribute("aria-labelledby", `heading${id}`);
+	accordionContentDiv.setAttribute("data-bs-parent", `#chapter-accordion-${id}`);
+
+	const accordionBodyDiv = document.createElement("div");
+	accordionBodyDiv.className = "accordion-body d-grid gap-2";
+
+	const addButton = document.createElement("button");
+	addButton.id = "prevButton";
+	addButton.type = "button";
+	addButton.className = "btn btn-dark accordion-button";
+	addButton.textContent = "ADD A SECTION";
+	addButton.addEventListener("click", () => addSection(activeChapter));
+	accordionBodyDiv.appendChild(addButton);
+
+	if (sections.length) {
+		sections.forEach((section) => {
+			const sectionElement = renderSection(section, id, chapterName);
+			accordionBodyDiv.appendChild(sectionElement);
+		});
+	} else {
+		const noContentDiv = document.createElement("div");
+		noContentDiv.className = "accordion-body";
+		noContentDiv.textContent = "No Content";
+		accordionBodyDiv.appendChild(noContentDiv);
+	}
+
+	accordionContentDiv.appendChild(accordionBodyDiv);
+	return accordionContentDiv;
 }
 
-function addChapterToList(chapter, chapters) {
+function addChapterToList(chapter, callback, elem) {
 	const { chapter_name, id, sections } = chapter;
-	const accordion = document.getElementById("accordionExample");
+	const accordion = document.getElementById(`chapter-accordion`);
 	if (sections?.length && !activeSection) {
 		activeSection = sections[0].id;
 	}
 
+	// Create the container for this chapter
+	const chapterDiv = document.createElement("div");
+	chapterDiv.className = "d-flex flex-column justify-content-between mb-2";
+
+	// Append the chapter button and dropdown
 	const chapterButton = renderChapterButton(id, chapter_name);
-	const chapterDropdown = renderChapterDropdown(id);
+
+	chapterDiv.innerHTML = chapterButton;
+
+	// Append the accordion content
 	const accordionContent = renderAccordionContent(id, sections, chapter_name);
+	chapterDiv.appendChild(accordionContent);
 
-	const newItem = `
-        <div class="d-flex justify-content-between mb-2">
-            ${chapterButton}
-            ${chapterDropdown}
-        </div>
-        ${accordionContent}
-    `;
+	// Append the new chapter to the accordion
+	accordion.appendChild(chapterDiv);
+	// accordion.appendChild(accordionContent);
 
-	accordion.insertAdjacentHTML("beforeend", newItem);
 	if (`${id}` === `${activeChapter}`) {
-		listSections(sections || []);
+		callback(sections || [], elem);
 	}
 }
+
 const moreOptionsIcon = `<svg width="20" height="20" viewBox="0 0 24 24">
 		<path
 			fill="none"
@@ -890,51 +926,67 @@ const moreOptionsIcon = `<svg width="20" height="20" viewBox="0 0 24 24">
 	</svg>`;
 
 function renderSection(section, id) {
-	const sectionIdAttr = `section_id${section.id}`;
-	const dropdownButtonClasses =
-		"h-100 btn-lg btn active d-flex gap-3 rounded-0 border-0 border-bottom text-left justify-content-between align-items-center dropdown-toggle";
-	const sectionButtonClasses =
+	const sectionDiv = document.createElement("div");
+	sectionDiv.className = "d-flex";
+
+	const sectionButton = document.createElement("button");
+	sectionButton.className =
 		"btn-lg btn active rounded-0 border-0 border-bottom d-flex gap-3 w-100 text-left justify-content-between align-items-center";
+	sectionButton.textContent = section.section_title;
+	sectionButton.addEventListener("click", () => {
+		console.log({ id });
+		scrollIntoView(section.id);
+	});
 
-	const dropdownMenu = `
-		<ul class="dropdown-menu" aria-labelledby="${sectionIdAttr}">
-			<li><a class="dropdown-item" onClick="editSection('${id}', '${section.id}')" href="#">Edit</a></li>
-			<li><a class="dropdown-item" href="#" onClick="sectionDeleteConfirmation('${section.id}')">Delete</a></li>
-		</ul>`;
+	const dropdownDiv = document.createElement("div");
+	dropdownDiv.className = "dropdown h-100";
 
-	return `
-		<div class="d-flex">
-			<button class="${sectionButtonClasses}" onClick="onSectionClick('${id}')">
-				${section.section_title}
-			</button>  
-			<div class="dropdown h-100">
-				<button class="${dropdownButtonClasses}" type="button" id="${sectionIdAttr}" data-bs-toggle="dropdown" aria-expanded="false">
-					${moreOptionsIcon}
-				</button>  
-				${dropdownMenu}
-			</div>
-		</div>`;
+	const dropdownButton = document.createElement("button");
+	dropdownButton.className =
+		"h-100 btn-lg btn active d-flex gap-3 rounded-0 border-0 border-bottom text-left justify-content-between align-items-center dropdown-toggle";
+	dropdownButton.setAttribute("type", "button");
+	dropdownButton.setAttribute("data-bs-toggle", "dropdown");
+	dropdownButton.setAttribute("aria-expanded", "false");
+	dropdownButton.innerHTML = moreOptionsIcon; // Assuming moreOptionsIcon is a valid HTML string
+	dropdownDiv.appendChild(dropdownButton);
+
+	const dropdownMenu = document.createElement("ul");
+	dropdownMenu.className = "dropdown-menu";
+	dropdownMenu.setAttribute("aria-labelledby", `section_id${section.id}`);
+	dropdownMenu.innerHTML = `
+			<li><a class="dropdown-item" href="#" onclick="editSection('${id}', '${section.id}')">Edit</a></li>
+			<li><a class="dropdown-item" href="#" onclick="sectionDeleteConfirmation('${section.id}')">Delete</a></li>
+		`;
+	dropdownDiv.appendChild(dropdownMenu);
+
+	sectionDiv.appendChild(sectionButton);
+	sectionDiv.appendChild(dropdownDiv);
+
+	return sectionDiv;
 }
 
 // SECTION CRUD
 
-function listSections(sections = []) {
+function listSections(sections = [], elem) {
 	const content = document.getElementById("content");
+	content.style.display = "block";
+	content.innerHTML = "";
 	console.log({ sections });
-	let str = "";
 	if (sections.length) {
-		str = sections
-			.map((section) => {
-				const sectionId = `${section.id}`;
-				return `<div class="content-section" >
-							<div id="${sectionId}" ><strong>${section.content}</strong></div>
-						</div>`;
-			})
-			.join(`<br/><br/>`);
+		sections.forEach((section) => {
+			const sectionDiv = document.createElement("div");
+			sectionDiv.className = "content-section";
+
+			const innerDiv = document.createElement("div");
+			innerDiv.id = `${section.id}`;
+			innerDiv.innerHTML = `${section.content}`;
+
+			sectionDiv.appendChild(innerDiv);
+			content.appendChild(sectionDiv);
+		});
 	} else {
-		str = `No content`;
+		content.innerHTML = "No content";
 	}
-	content.innerHTML = str;
 }
 
 function handleSubmit() {
@@ -1204,24 +1256,17 @@ function deleteFigureAndCitationModal(key, id) {
 }
 
 async function updateCitationList() {
-	let citationsDiv = document.getElementById("citations-container");
-	citationsDiv.innerHTML = "";
+	const figureDiv = document.getElementById("citations-container");
+	figureDiv.innerHTML = "";
+
 	try {
 		const res = await APIS.getCitations(selectedBook);
 		if (res.success) {
 			const citations = res.data || [];
-			for (let i = 0; i < citations.length; i++) {
-				let citationElement = document.createElement("li");
-				citationElement.innerHTML = `
-						<a href="#${citations[i].citation_id}">
-							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-							 ${citations[i].citation_name}
-						</a>
-						<svg onClick="deleteFigureAndCitationModal('citation','${citations[i].citation_id}')" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-						`;
-				citationsDiv.appendChild(citationElement);
-			}
-			console.log({ res });
+			citations.forEach((citation) => {
+				const figureElement = createCitationListItem(citation);
+				figureDiv.appendChild(figureElement);
+			});
 		} else {
 			createToast({ type: "error", status: "Failed!", message: res.error });
 		}
@@ -1229,37 +1274,137 @@ async function updateCitationList() {
 		createToast({ type: "error", status: "Error!", message: "Something went wrong" });
 	}
 }
+
+// async function updateCitationList() {
+// 	let citationsDiv = document.getElementById("citations-container");
+// 	citationsDiv.innerHTML = "";
+// 	try {
+// 		const res = await APIS.getCitations(selectedBook);
+// 		if (res.success) {
+// 			const citations = res.data || [];
+// 			for (let i = 0; i < citations.length; i++) {
+// 				let citationElement = document.createElement("li");
+// 				citationElement.innerHTML = `
+// 						<a href="#${citations[i].citation_id}" onClick="scrollIntoElem('${citations[i].chapter_id}', '${citations[i].citation_id}}')">
+// 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+// 							 ${citations[i].citation_name}
+// 						</a>
+// 						<svg onClick="deleteFigureAndCitationModal('citation','${citations[i].citation_id}')" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+// 						`;
+// 				citationsDiv.appendChild(citationElement);
+// 			}
+// 			console.log({ res });
+// 		} else {
+// 			createToast({ type: "error", status: "Failed!", message: res.error });
+// 		}
+// 	} catch (err) {
+// 		createToast({ type: "error", status: "Error!", message: "Something went wrong" });
+// 	}
+// }
+
+const scrollIntoElem = async (chapter, id) => {
+	console.log({ id, a: document.getElementById(id) });
+	if (document.getElementById(id)) {
+		scrollIntoView(id);
+	} else {
+		selectedChapter = chapter;
+		activeChapter = chapter;
+		await showChapterList(id);
+		scrollIntoView(id);
+	}
+};
+
 async function updateFigureList() {
-	let figureDiv = document.getElementById("figures-container");
+	const figureDiv = document.getElementById("figures-container");
 	figureDiv.innerHTML = "";
+
 	try {
 		const res = await APIS.getFigures(selectedBook);
 		if (res.success) {
 			const figures = res.data || [];
-			for (let i = 0; i < figures.length; i++) {
-				let figureElement = document.createElement("li");
-				figureElement.innerHTML = `
-					<a href="#${figures[i].figure_id}">
-						<i>
-							<svg width="20" height="20" viewBox="0 0 1920 1536">
-								<path
-									fill="currentColor"
-									d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z" />
-							</svg>
-						</i>
-						${figures[i].figure_name}
-					</a>
-					<svg onClick="deleteFigureAndCitationModal('figure','${figures[i].figure_id}')" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-						
-					`;
+			figures.forEach((figure) => {
+				const figureElement = createFigureListItem(figure);
 				figureDiv.appendChild(figureElement);
-			}
+			});
 		} else {
 			createToast({ type: "error", status: "Failed!", message: res.error });
 		}
 	} catch (err) {
 		createToast({ type: "error", status: "Error!", message: "Something went wrong" });
 	}
+}
+
+function createFigureListItem(figure) {
+	const figureElement = document.createElement("li");
+
+	// Create div for figure details
+	const figureDetails = document.createElement("div");
+	const figureAction = document.createElement("div");
+	figureDetails.setAttribute('class', "figure-ref")
+	figureDetails.addEventListener("click", () => {
+		scrollIntoElem(figure.chapter_id, figure.figure_id);
+	});
+
+	// Add figure details
+	figureDetails.innerHTML = `
+        <i>
+			<svg width="20" height="20" viewBox="0 0 1920 1536">
+				<path
+					fill="currentColor"
+					d="M640 448q0 80-56 136t-136 56t-136-56t-56-136t56-136t136-56t136 56t56 136zm1024 384v448H256v-192l320-320l160 160l512-512zm96-704H160q-13 0-22.5 9.5T128 160v1216q0 13 9.5 22.5t22.5 9.5h1600q13 0 22.5-9.5t9.5-22.5V160q0-13-9.5-22.5T1760 128zm160 32v1216q0 66-47 113t-113 47H160q-66 0-113-47T0 1376V160Q0 94 47 47T160 0h1600q66 0 113 47t47 113z" />
+			</svg>
+			${figure.figure_name}
+        </i>
+    `;
+
+	// Keep the original SVG for delete functionality
+	figureAction.innerHTML += `
+        <svg onclick="deleteFigureAndCitationModal('figure','${figure.figure_id}')" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+    `;
+	figureElement.appendChild(figureDetails);
+	figureElement.appendChild(figureAction);
+
+
+	return figureElement;
+}
+function createCitationListItem(citation) {
+	const figureElement = document.createElement("li");
+
+	// Create div for figure details
+	const figureDetails = document.createElement("div");
+	const figureAction = document.createElement("div");
+	figureDetails.setAttribute('class', "figure-ref")
+	figureDetails.addEventListener("click", () => {
+		scrollIntoElem(citation.citation_id, citation.citation_id);
+	});
+
+	// Add figure details
+	figureDetails.innerHTML = `
+        <i>
+		<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+			${citation.citation_name}
+        </i>
+    `;
+
+	// Keep the original SVG for delete functionality
+	figureAction.innerHTML += `
+        <svg onclick="deleteFigureAndCitationModal('citation','${citation.citation_id}')" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+    `;
+	figureElement.appendChild(figureDetails);
+	figureElement.appendChild(figureAction);
+
+
+	return figureElement;
 }
 
 const deleteFigureAndCitation = async (key, id) => {
