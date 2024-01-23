@@ -11,7 +11,8 @@ const BlockEmbed = Quill.import("blots/block/embed");
 const rightbar = document.getElementById("rightbar");
 
 // const base_url = "https://regid.ca/AW-Dev3/books/public/";
-const base_url = "http://localhost:8080/boiler";
+// const base_url = "http://localhost:8080/boiler";
+const base_url = "http://localhost:8080/books";
 const APIS = {
 	fetchBooks: () => makeRequest(`/books`),
 	fetchBook: (id) => makeRequest(`/books/${id}`),
@@ -212,15 +213,12 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 			formData.append("figure_id", figure_id);
 			formData.append("figure_name", value);
 			formData.append("chapter_id", selectedChapter || activeChapter);
-			formData.append("section_id", selectedSection || activeChapter );
-				
-			if(selectedSection === 0 ||  selectedSection === undefined ){
-				createToast({
-					type: "error",
-					status: "Failed",
-					message: `Unable to Create Figure! Please Save Section`,
-				});	
-				return;
+			formData.append("section_id", selectedSection || activeChapter);
+
+			let section = null;
+			if (!selectedSection) {
+				section = await addSectionBefore();
+				selectedSection = section.id;
 			}
 			let res = await APIS.addFigure(selectedBook, formData);
 
@@ -287,6 +285,28 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 		});
 	}
 }
+
+const addSectionBefore = async () => {
+	try {
+		debugger;
+		const section_title = document.getElementById("sectionTitle").value.trim();
+		const content = quill.root.innerHTML;
+		const c = quill.getContents();
+		console.log(c);
+		console.log({ content });
+
+		const section = {
+			section_title,
+			content,
+		};
+		let res = await APIS.addSection(selectedBook, selectedChapter || activeChapter, section);
+		if (res.success) {
+			return res.data;
+		} else throw new Error(res);
+	} catch (err) {
+		createToast({ type: "error", status: "Failed", message: "Failed to save" });
+	}
+};
 class CitationTooltip extends Quill.import("ui/tooltip") {
 	constructor(quill, boundsContainer) {
 		super(quill, boundsContainer);
@@ -338,29 +358,20 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 		let range = this.quill.getSelection(true);
 		let citation_id = generateId("citation");
 		try {
-			if(selectedSection === 0){
-				createToast({
-					type: "error",
-					status: "Failed",
-					message: `Unable to Create Citation! Please Save Section`,
-				});	
-				return;
+			let section = null;
+			if (!selectedSection) {
+				section = await addSectionBefore();
+				selectedSection = section.id;
 			}
 			const res = await APIS.addCitation({
 				citation_id,
 				citation_name,
 				book_id: selectedBook,
 				chapter_id: selectedChapter || activeChapter,
-				section_id: selectedSection
+				section_id: selectedSection || section.id,
 			});
 			if (res.success) {
-				this.quill.formatText(
-					range.index,
-					range.length,
-					"citation",
-					citation_id,
-					Quill.sources.USER
-				);
+				this.quill.formatText(range.index, range.length, "citation", citation_id);
 				updateCitationList();
 				this.hide();
 				createToast({
@@ -1323,7 +1334,7 @@ async function updateCitationList() {
 // }
 
 const scrollIntoElem = async (chapter, id) => {
-	console.log({ id, a: document.getElementById(id) });
+	console.log({ id, a: document.getElementById(id), chapter });
 	if (document.getElementById(id)) {
 		scrollIntoView(id);
 	} else {
@@ -1360,7 +1371,7 @@ function createFigureListItem(figure) {
 	// Create div for figure details
 	const figureDetails = document.createElement("div");
 	const figureAction = document.createElement("div");
-	figureDetails.setAttribute('class', "figure-ref")
+	figureDetails.setAttribute("class", "figure-ref");
 	figureDetails.addEventListener("click", () => {
 		scrollIntoElem(figure.chapter_id, figure.figure_id);
 	});
@@ -1389,7 +1400,6 @@ function createFigureListItem(figure) {
 	figureElement.appendChild(figureDetails);
 	figureElement.appendChild(figureAction);
 
-
 	return figureElement;
 }
 function createCitationListItem(citation) {
@@ -1398,9 +1408,9 @@ function createCitationListItem(citation) {
 	// Create div for figure details
 	const figureDetails = document.createElement("div");
 	const figureAction = document.createElement("div");
-	figureDetails.setAttribute('class', "figure-ref")
+	figureDetails.setAttribute("class", "figure-ref");
 	figureDetails.addEventListener("click", () => {
-		scrollIntoElem(citation.citation_id, citation.citation_id);
+		scrollIntoElem(citation.chapter_id, citation.citation_id);
 	});
 
 	// Add figure details
@@ -1422,7 +1432,6 @@ function createCitationListItem(citation) {
     `;
 	figureElement.appendChild(figureDetails);
 	figureElement.appendChild(figureAction);
-
 
 	return figureElement;
 }
