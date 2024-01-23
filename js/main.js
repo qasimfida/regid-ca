@@ -11,7 +11,7 @@ const BlockEmbed = Quill.import("blots/block/embed");
 const rightbar = document.getElementById("rightbar");
 
 // const base_url = "https://regid.ca/AW-Dev3/books/public/";
-const base_url = "http://localhost:8080/books";
+const base_url = "http://localhost:8080/boiler";
 const APIS = {
 	fetchBooks: () => makeRequest(`/books`),
 	fetchBook: (id) => makeRequest(`/books/${id}`),
@@ -212,7 +212,18 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 			formData.append("figure_id", figure_id);
 			formData.append("figure_name", value);
 			formData.append("chapter_id", selectedChapter || activeChapter);
+			formData.append("section_id", selectedSection || activeChapter );
+				
+			if(selectedSection === 0 ||  selectedSection === undefined ){
+				createToast({
+					type: "error",
+					status: "Failed",
+					message: `Unable to Create Figure! Please Save Section`,
+				});	
+				return;
+			}
 			let res = await APIS.addFigure(selectedBook, formData);
+
 			if (res.success) {
 				this.updateQuillEditor(figure_id, res.data.figure_image);
 				updateFigureList();
@@ -327,11 +338,20 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 		let range = this.quill.getSelection(true);
 		let citation_id = generateId("citation");
 		try {
+			if(selectedSection === 0){
+				createToast({
+					type: "error",
+					status: "Failed",
+					message: `Unable to Create Citation! Please Save Section`,
+				});	
+				return;
+			}
 			const res = await APIS.addCitation({
 				citation_id,
 				citation_name,
 				book_id: selectedBook,
 				chapter_id: selectedChapter || activeChapter,
+				section_id: selectedSection
 			});
 			if (res.success) {
 				this.quill.formatText(

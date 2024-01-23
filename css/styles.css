@@ -648,3 +648,6 @@ img {
 .ql-tooltip.ql-figure-tooltip::before {
   content: "Figure :"
 }
+.figure-ref{
+  cursor: pointer;
+}
