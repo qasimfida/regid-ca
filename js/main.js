@@ -35,7 +35,7 @@ const APIS = {
 	deleteChapter: (id) => makeRequest(`/chapter/${id}`, "DELETE"),
 	getCitation: (id) => makeRequest(`/citation/${id}`),
 	getFigure: (id) => makeRequest(`/figure/${id}`),
-	updateFigure: (payload) => makeRequest(`/figure/${payload.figure_id}`, "PUT", payload),
+	updateFigure: (figure_id, payload) => makeRequest(`/figure/${figure_id}`, "PUT", payload),
 	deleteFigure: (id) => makeRequest(`/figure/${id}`, "DELETE"),
 	deleteCitation: (id) => makeRequest(`/citation/${id}`, "DELETE"),
 };
@@ -47,8 +47,7 @@ const toolbarOptions = [
 	[{ list: "ordered" }, { list: "bullet" }],
 	[{ script: "sub" }, { script: "super" }],
 	[{ indent: "-1" }, { indent: "+1" }],
-	[{ direction: "rtl" }],
-	[{ header: ["1", "2", "3", false, "customHeader"] }],
+	[{ header: ["1", "2", "3", false] }],
 
 	[{ color: [] }, { background: [] }],
 	[{ font: [] }],
@@ -66,16 +65,6 @@ const addSectionModal = new bootstrap.Modal(document.getElementById("addSectionM
 const deleteConfirmationModal = new bootstrap.Modal(
 	document.getElementById("deleteConfirmationModal")
 );
-
-/* const deleteConfirmationModal = new bootstrap.Modal(
-	document.getElementById("deleteConfirmationModal")
-);
-const deleteConfirmationModal = new bootstrap.Modal(
-	document.getElementById("deleteConfirmationModal")
-);
-const deleteConfirmationModal = new bootstrap.Modal(
-	document.getElementById("deleteConfirmationModal")
-); */
 
 const removeToast = (toast) => {
 	toast.classList.add("hide");
@@ -105,51 +94,125 @@ const generateId = (key) => {
 	return `${key || "id"}-${date}-${Math.floor(Math.random() * 100000)}`;
 };
 class CitationBlot extends Inline {
-	static create(id) {
+	static create(v) {
+		const { value, id, className, style } = v;
 		let node = super.create();
-		node.setAttribute("class", "citation-link");
+		let cls = (className || "") + " " + "citation-link";
+		node.setAttribute("class", cls);
 		node.setAttribute("id", id);
 		node.setAttribute("data-citation", id);
-		console.log({ id, node }, "node");
+		node.setAttribute("data-value", value);
 		return node;
 	}
 
 	static formats(node) {
-		return node.getAttribute("data-citation");
+		const value = {
+			id: node.getAttribute("data-citation"),
+			value: node.getAttribute("data-value"),
+			styles: node.getAttribute("style"),
+			className: node.getAttribute("class"),
+		};
+		return value;
 	}
 }
 
 CitationBlot.blotName = "citation";
 CitationBlot.tagName = "span";
 
+function updateStyle(styles, key, value, shouldAdd = true) {
+	// Parsing the styles string into an object
+	const styleObj = (styles || "").split(";").reduce((acc, style) => {
+		if (style.trim()) {
+			const [k, v] = style.split(":");
+			acc[k.trim()] = v.trim();
+		}
+		return acc;
+	}, {});
+
+	// Check if the key exists in the object
+	const keyExists = styleObj.hasOwnProperty(key);
+	const valueMatches = keyExists && styleObj[key] === value;
+	if (key) {
+		if (keyExists && valueMatches) {
+			if (shouldAdd) {
+				// Update the value if shouldAdd is true
+				styleObj[key] = value;
+			} else {
+				// Delete the property if shouldAdd is false
+				delete styleObj[key];
+			}
+		} else {
+			// Add the property with its value if it doesn't exist and shouldAdd is true
+			styleObj[key] = value;
+			// If the property doesn't exist and shouldAdd is false, do nothing
+		}
+	}
+
+	// Converting the object back into a string
+	return (
+		Object.entries(styleObj)
+			.map(([k, v]) => `${k}: ${v}`)
+			.join(";") + ";"
+	);
+}
+
 class FigureBlot extends BlockEmbed {
 	static create(value) {
 		let node = super.create();
+		node.addEventListener("click", (event) => {
+			event.stopPropagation(); // Prevent event propagation
+			const blot = Quill.find(node);
+
+			if (blot) {
+				const index = blot.offset();
+				const length = blot.length();
+				quill.setSelection(index, length);
+				const figureTooltip = quill.getModule("figureTooltip");
+				const bounds = quill.getBounds(index + 1);
+				figureTooltip &&
+					figureTooltip.show(
+						{ figure_id: value.id, figure_name: value.caption, figure_image: value.src },
+						bounds
+					);
+			}
+		});
+
 		node.setAttribute("id", value.id);
 
 		const img = document.createElement("img");
 		img.setAttribute("src", value.src);
 		node.appendChild(img);
-
+		let cls = (value.className || "") + " " + "figure-caption";
 		const caption = document.createElement("figcaption");
-		caption.textContent = value.caption;
 		caption.setAttribute("data-figure", value.id);
-		caption.setAttribute("class", "figure-caption");
+		caption.setAttribute("class", cls);
+		caption.textContent = value.caption;
+		let newStyles = value.styles || "";
+		if (value.attr) {
+			newStyles = updateStyle(
+				newStyles + value.style || "",
+				value.attr.key,
+				value.attr.value,
+				value.shouldAdd
+			);
+		}
+		caption.setAttribute("style", newStyles);
 		node.appendChild(caption);
 
 		return node;
 	}
 
 	static value(node) {
-		console.log({ node, first: node.firstChild, last: node.lastChild });
 		return {
 			id: node.getAttribute("id"),
+			styles: node.children[1].getAttribute("style"),
+			className: node.children[1].getAttribute("class"),
 			src: node.firstChild ? node.firstChild.getAttribute("src") : "",
 			caption: node.lastChild ? node.lastChild.textContent : "",
 		};
 	}
 }
-
+FigureBlot.allowedAttributes = ["style"];
 FigureBlot.blotName = "figure";
 FigureBlot.tagName = "figure";
 
@@ -179,7 +242,6 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 	}
 
 	async show(figure, bounds) {
-		console.log({ figure });
 
 		this.figure = figure || {};
 		if (figure.figure_id) {
@@ -188,11 +250,12 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 		this.textbox.value = figure.figure_name || "";
 		super.show();
 		this.positionTooltip(bounds);
+		this.quill.focus();
 	}
 
 	positionTooltip(bounds) {
 		if (bounds) {
-			this.root.style.left = `${bounds.left + window.pageXOffset}px`;
+			this.root.style.left = `${window.pageXOffset}px`;
 			this.root.style.top = `${bounds.top}px`;
 		}
 	}
@@ -220,7 +283,12 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 				section = await addSectionBefore();
 				selectedSection = section.id;
 			}
-			let res = await APIS.addFigure(selectedBook, formData);
+			let res = null;
+			if (figure.figure_id) {
+				res = await APIS.updateFigure(figure_id, formData);
+			} else {
+				res = await APIS.addFigure(selectedBook, formData);
+			}
 
 			if (res.success) {
 				this.updateQuillEditor(figure_id, res.data.figure_image);
@@ -240,12 +308,26 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 		const range = this.quill.getSelection(true);
 		const figure = this.figure;
 		const value = this.textbox.value;
-		const imageSrc = base_url + "/" + image;
-
+		let imageSrc = "";
+		let styles = "";
+		let cls = "";
+		if (figure.figure_id) {
+			const figureBlot = this.quill.getLeaf(range.index)[0];
+			const captionElement = figureBlot.domNode.children[1];
+			const attributes = extractAttributes(captionElement);
+			styles = attributes.style;
+			cls = attributes.class;
+			this.quill.deleteText(range.index, 1);
+			imageSrc = figure.figure_image;
+		} else {
+			imageSrc = base_url + "/" + image;
+		}
 		this.quill.insertEmbed(range.index, "figure", {
 			id: figure_id,
 			src: imageSrc,
 			caption: value,
+			styles,
+			className: cls,
 		});
 	}
 
@@ -288,12 +370,8 @@ class FigureTooltip extends Quill.import("ui/tooltip") {
 
 const addSectionBefore = async () => {
 	try {
-		debugger;
 		const section_title = document.getElementById("sectionTitle").value.trim();
 		const content = quill.root.innerHTML;
-		const c = quill.getContents();
-		console.log(c);
-		console.log({ content });
 
 		const section = {
 			section_title,
@@ -333,7 +411,7 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 		});
 	}
 
-	show(value, bounds) {
+	show({ value }, bounds) {
 		this.textbox.value = value || "";
 		super.show();
 
@@ -371,7 +449,10 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 				section_id: selectedSection || section.id,
 			});
 			if (res.success) {
-				this.quill.formatText(range.index, range.length, "citation", citation_id);
+				this.quill.formatText(range.index, range.length, "citation", {
+					id: citation_id,
+					value: citation_name,
+				});
 				updateCitationList();
 				this.hide();
 				createToast({
@@ -388,16 +469,18 @@ class CitationTooltip extends Quill.import("ui/tooltip") {
 	}
 }
 
-Quill.register({
-	"modules/figureTooltip": FigureTooltip,
-	"modules/citationTooltip": CitationTooltip,
-	"formats/figure": FigureBlot,
-	"formats/citation": CitationBlot,
-});
+Quill.register(
+	{
+		"modules/figureTooltip": FigureTooltip,
+		"modules/citationTooltip": CitationTooltip,
+		"formats/figure": FigureBlot,
+		"formats/citation": CitationBlot,
+	},
+	true
+);
 
 const citationHandler = (value) => {
 	let range = quill.getSelection();
-	console.log({ range });
 	if (range && range.length > 0) {
 		const value = quill.getText(range.index, range.length);
 		const bounds = quill.getBounds(range);
@@ -433,13 +516,109 @@ let quill = new Quill("#editor", {
 			handlers: {
 				image: imageHandler,
 				citation: citationHandler,
+				color: handleColor,
+				bold: handleBold, // Custom handler for bold
+				italic: handleItalic, // Custom handler for italic
+				underline: handleUnderline,
+				background: handleBackground,
+				header: handleHeader,
+				blockquote: handleBlockQoute,
+				strike: handleStrikethrough,
+				font: handleFont,
 			},
 			container: toolbarOptions,
 		},
 		citationTooltip: true,
 		figureTooltip: true,
+		keyboard: {
+			module: "keyboard",
+		},
 	},
 });
+
+function extractAttributes(elem) {
+	const attributes = {};
+	for (const attr of elem.attributes) {
+		attributes[attr.name] = attr.value;
+	}
+	return attributes;
+}
+
+function setOrUpdate(element, key, value, unset) {
+	if (value) {
+		if (unset) {
+			element.style[key] = unset ? "unset" : value;
+		} else {
+			element.style[key] = value;
+		}
+	}
+}
+
+function handleBold() {
+	applyFormat("bold", "font-weight", "bold", false);
+}
+function handleFont(a) {
+	applyFormat("font", "font-family", a, true);
+}
+function handleStrikethrough() {
+	applyFormat("strike", "text-decoration", "line-through", false);
+}
+function handleBlockQoute(a) {
+	applyFormat("class", "class", "blockquote", true);
+}
+function handleHeader(a) {
+	const key = a || "3";
+	const sizes = ["2rem", "1.5rem", "1rem", "0.876rem"];
+	applyFormat("header", "font-size", sizes[key], true);
+}
+
+function handleBackground(value) {
+	applyFormat("background", "background-color", value, false);
+}
+
+// Custom handler for italic
+function handleItalic() {
+	applyFormat("italic", "font-style", "italic", false);
+}
+
+// Custom handler for underline
+function handleUnderline() {
+	applyFormat("underline", "text-decoration", "underline", false);
+}
+
+// Custom handler for color
+function handleColor(value) {
+	applyFormat("color", "color", value);
+}
+
+function applyFormat(format, styleKey, styleValue, shouldAdd) {
+	const selection = quill.getSelection();
+	const formatInfo = quill.getFormat(selection);
+	const index = selection ? selection.index : null;
+	const blot = index !== null ? quill.getLeaf(index)[0] : null;
+	if (blot && blot instanceof FigureBlot) {
+		const captionElement = blot.domNode.children[1];
+		let range = quill.getSelection(true);
+		const info = {
+			id: blot.statics.value(blot.domNode).id,
+			caption: blot.statics.value(blot.domNode).caption,
+			src: blot.statics.value(blot.domNode).src,
+		};
+
+		const attributes = extractAttributes(captionElement);
+		quill.deleteText(range.index, 1);
+		quill.insertEmbed(range.index, "figure", {
+			...info,
+			style: attributes.style,
+			attr: { key: format === "class" ? "" : styleKey, value: styleValue },
+			className: format === "class" ? attributes.class + " " + styleValue : attributes.class,
+			shouldAdd,
+		});
+	} else {
+		const formatExists = formatInfo[format];
+		quill.format(format, !formatExists ? styleValue : false);
+	}
+}
 
 const toolbar = quill.getModule("toolbar");
 if (toolbar) {
@@ -676,7 +855,6 @@ async function updateBookDetails(id) {
 	const res = await APIS.fetchBook(id);
 	if (res.success) {
 		const { author, book_title, description, image } = res.data.book;
-		console.log({ res });
 		selectedBook = id;
 		const bookDetailsContent = document.getElementById("bookDetailsContent");
 		bookDetailsContent.innerHTML = "";
@@ -838,7 +1016,6 @@ function handleChapterClick(id) {
 }
 
 function scrollIntoView(id) {
-	console.log({ id }, "Asdf");
 	const element = document.getElementById(id);
 	if (element) {
 		element.scrollIntoView({ behavior: "smooth", block: "start", inline: "start" });
@@ -965,7 +1142,6 @@ function renderSection(section, id) {
 		"btn-lg btn active rounded-0 border-0 border-bottom d-flex gap-3 w-100 text-left justify-content-between align-items-center";
 	sectionButton.textContent = section.section_title;
 	sectionButton.addEventListener("click", () => {
-		console.log({ id });
 		scrollIntoView(section.id);
 	});
 
@@ -1002,7 +1178,6 @@ function listSections(sections = [], elem) {
 	const content = document.getElementById("content");
 	content.style.display = "block";
 	content.innerHTML = "";
-	console.log({ sections });
 	if (sections.length) {
 		sections.forEach((section) => {
 			const sectionDiv = document.createElement("div");
@@ -1076,9 +1251,6 @@ sectionForm.removeEventListener("submit", saveSection);
 async function saveSection() {
 	const section_title = document.getElementById("sectionTitle").value.trim();
 	const content = quill.root.innerHTML;
-	const c = quill.getContents();
-	console.log(c);
-	console.log({ content });
 
 	if (!section_title) {
 		return;
@@ -1095,6 +1267,7 @@ async function saveSection() {
 		} else {
 			res = await APIS.addSection(selectedBook, selectedChapter || activeChapter, section);
 		}
+
 		if (res.success) {
 			showChapterList();
 			quill.setContents([]);
@@ -1129,7 +1302,6 @@ async function editSection(id, sectionId) {
 
 	try {
 		const res = await APIS.getSection(sectionId);
-		console.log({ res }, "section");
 		if (res.success) {
 			const section = res.data?.[0] || {};
 			// section = sections.find((sec) => `${sec.id}` === `${activeSection}`);
@@ -1139,6 +1311,7 @@ async function editSection(id, sectionId) {
 			// console.log({ selectedSection, activeSection, section });
 			addSectionModal.show();
 			document.getElementById("sectionTitle").value = section.section_title;
+			// quill.insertEmbed(0,section.content);
 			quill.clipboard.dangerouslyPasteHTML(section.content);
 
 			// document.getElementById("sectionContent").value = section.content;
@@ -1148,7 +1321,6 @@ async function editSection(id, sectionId) {
 
 // Function to delete a chapter
 async function deleteChapter(id) {
-	console.log({ id });
 	try {
 		const res = await APIS.deleteChapter(id);
 		if (res.success) {
@@ -1294,7 +1466,16 @@ async function updateCitationList() {
 		const res = await APIS.getCitations(selectedBook);
 		if (res.success) {
 			const citations = res.data || [];
-			citations.forEach((citation) => {
+			const sorted = citations.sort((a, b) => {
+				if (a.citation_name < b.citation_name) {
+					return -1;
+				}
+				if (a.citation_name > b.citation_name) {
+					return 1;
+				}
+				return 0;
+			});
+			sorted.forEach((citation) => {
 				const figureElement = createCitationListItem(citation);
 				figureDiv.appendChild(figureElement);
 			});
@@ -1334,7 +1515,6 @@ async function updateCitationList() {
 // }
 
 const scrollIntoElem = async (chapter, id) => {
-	console.log({ id, a: document.getElementById(id), chapter });
 	if (document.getElementById(id)) {
 		scrollIntoView(id);
 	} else {
@@ -1353,7 +1533,16 @@ async function updateFigureList() {
 		const res = await APIS.getFigures(selectedBook);
 		if (res.success) {
 			const figures = res.data || [];
-			figures.forEach((figure) => {
+			const sorted = figures.sort((a, b) => {
+				if (a.figure_name < b.figure_name) {
+					return -1;
+				}
+				if (a.figure_name > b.figure_name) {
+					return 1;
+				}
+				return 0;
+			});
+			sorted.forEach((figure) => {
 				const figureElement = createFigureListItem(figure);
 				figureDiv.appendChild(figureElement);
 			});
